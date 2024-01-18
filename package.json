@@ -1,0 +1,56 @@
+{
+  "name": "x-spider",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "lint": "prettier --write ./src/**/*.{ts,tsx,js,jsx,cjs} && eslint --fix ./src/**/*.{ts,tsx,js,jsx,cjs}",
+    "prepare": "husky install",
+    "build:icons": "tauri icon ./src-tauri/icons/icon.png"
+  },
+  "lint-staged": {
+    "./src/**/*.{ts,tsx,js,jsx,cjs}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.2.6",
+    "@tauri-apps/api": "^1.5.3",
+    "ahooks": "^3.7.8",
+    "antd": "^5.12.8",
+    "clsx": "^2.1.0",
+    "framer-motion": "^10.17.9",
+    "joi": "^17.11.1",
+    "ramda": "^0.29.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.4.4",
+    "@commitlint/config-conventional": "^18.4.4",
+    "@tauri-apps/cli": "^1.5.3",
+    "@types/ramda": "^0.29.9",
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.56.0",
+    "eslint-plugin-react": "^7.33.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "postcss": "^8.4.33",
+    "prettier": "^3.2.2",
+    "rimraf": "^5.0.5",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.0"
+  }
+}
