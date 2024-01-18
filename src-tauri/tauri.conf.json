@@ -21,11 +21,6 @@
       "dialog": {
         "all": true
       },
-      "http": {
-        "all": true,
-        "request": true,
-        "scope": []
-      },
       "notification": {
         "all": true
       },
