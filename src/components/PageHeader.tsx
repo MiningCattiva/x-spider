@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
-import { useRouteStore } from '../stores/route-store';
+import { useRouteStore } from '../stores/route';
 
 export const PageHeader: React.FC = () => {
   const currentRoute = useRouteStore((state) => state.route);
