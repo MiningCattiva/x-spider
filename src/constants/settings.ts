@@ -2,7 +2,7 @@ import { Settings } from '../interfaces/Settings';
 
 export const DEFAULT_SETTINGS: Settings = {
   proxy: {
-    enable: false,
+    enable: true,
     url: '',
   },
   download: {

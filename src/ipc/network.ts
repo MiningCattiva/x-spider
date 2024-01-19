@@ -2,7 +2,7 @@ import { invoke } from '@tauri-apps/api';
 import { Response } from '../interfaces/Response';
 import { RequestOptions } from '../interfaces/RequestOptions';
 import * as R from 'ramda';
-import { useSettingsStore } from '../stores/settings-store';
+import { useSettingsStore } from '../stores/settings';
 
 export async function request(options: RequestOptions) {
   const url = new URL(options.url);

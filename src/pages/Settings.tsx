@@ -30,6 +30,7 @@ export const Settings: React.FC = () => {
         <Item
           label="代理地址"
           settingKey="url"
+          description="留空则表示使用系统代理（Windows 上会自动取系统代理，Linux / MacOS 上使用 HTTP_PROXY 和 HTTPS_PROXY 环境变量，）"
           validator={(val) => {
             return Joi.string()
               .allow('')

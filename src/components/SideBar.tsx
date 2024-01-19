@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import React from 'react';
 import { ROUTES } from '../constants/routes';
 import { Route } from '../interfaces/Route';
-import { useRouteStore } from '../stores/route-store';
+import { useRouteStore } from '../stores/route';
 import { Account } from './Account';
 
 interface SideBarItemProps {

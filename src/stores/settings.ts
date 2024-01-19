@@ -6,8 +6,9 @@ import {
   DEFAULT_SETTINGS,
 } from '../constants/settings';
 import { Settings } from '../interfaces/Settings';
-import { createTauriFileStorage } from './persist-storage/tauri-file-storage';
+import { createTauriFileStorage } from './persist/tauri-file-storage';
 import * as R from 'ramda';
+import { settingsLoadedEvent } from '../events/settings-loaded';
 
 export interface SettingsStore extends Settings {
   update: (settings: Settings) => void;
@@ -32,19 +33,20 @@ export const useSettingsStore = create(
       version: CURRENT_SETTINGS_VERSION,
       storage: createTauriFileStorage(),
       onRehydrateStorage: () => {
-        return (state, error) => {
+        return async (state, error) => {
           if (error) return;
 
           // 如果没有默认保存路径，设置为系统 Downloads 文件夹所在地
           if (!state?.download.savePath) {
-            path.downloadDir().then((dir) => {
-              useSettingsStore.setState({
-                download: R.mergeDeepRight(state!.download, {
-                  savePath: dir,
-                }),
-              });
+            const dir = await path.downloadDir();
+            useSettingsStore.setState({
+              download: R.mergeDeepRight(state!.download, {
+                savePath: dir,
+              }),
             });
           }
+
+          settingsLoadedEvent.emit();
         };
       },
     },
