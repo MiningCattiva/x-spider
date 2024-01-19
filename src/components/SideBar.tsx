@@ -42,7 +42,7 @@ export const SideBar: React.FC = () => {
   return (
     <aside
       aria-label="侧边栏"
-      className="fixed top-0 left-0 h-full w-52 bg-black z-40 transition-transform"
+      className="fixed top-0 left-0 h-full w-52 bg-ant-color-primary z-40 transition-transform"
     >
       <Account />
       <nav aria-label="页面导航">

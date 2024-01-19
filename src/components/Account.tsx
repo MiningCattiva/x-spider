@@ -7,9 +7,7 @@ export const Account: React.FC = () => {
     <div className="px-4">
       <div className="flex justify-center border-b-[1px] py-6 border-[rgba(255,255,255,0.5)]">
         <button className="bg-transparent">
-          <Avatar size="large" className="bg-gray-900">
-            登录
-          </Avatar>
+          <Avatar size="large">登录</Avatar>
         </button>
       </div>
     </div>
