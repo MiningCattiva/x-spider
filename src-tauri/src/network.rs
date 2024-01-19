@@ -1,12 +1,12 @@
 use std::collections::HashMap;
-
 use reqwest::Method;
+use serde_json::Value;
 
 #[derive(Default, serde::Serialize)]
 pub struct Response {
   status: u16,
   headers: HashMap<String, Vec<String>>,
-  body: String
+  body: Value,
 }
 
 #[tauri::command]
@@ -16,8 +16,10 @@ pub async fn network_fetch(
   body: String,
   enable_proxy: bool,
   proxy_url: String,
+  response_type: String,
   headers: HashMap<String, String>,
 ) -> Result<Response, String> {
+  let map_reqwest_err = |err: reqwest::Error| err.to_string();
   // Convert method string into Method
   let method: Method = match method.to_uppercase().as_str() {
     "GET" => Ok(Method::GET),
@@ -66,7 +68,7 @@ pub async fn network_fetch(
   };
 
   // Send request
-  let response = request.send().await.map_err(|err| err.to_string())?;
+  let response = request.send().await.map_err(map_reqwest_err)?;
 
   // Extract some info
   let status = response.status().as_u16();
@@ -87,7 +89,19 @@ pub async fn network_fetch(
 
     h
   };
-  let body = response.text().await.map_err(|err| err.to_string())?;
+
+  // Load response body
+  let body: Value = {
+    match response_type.as_str() {
+      "json" => response.json().await.map_err(map_reqwest_err).map(|res| Value::Object(res)),
+      "text" => response.text().await.map_err(map_reqwest_err).map(|res| Value::String(res)),
+      "binary" => {
+        let bytes = response.bytes().await.map_err(map_reqwest_err)?;
+        serde_json::to_value(bytes.to_vec()).map_err(|err| err.to_string())
+      },
+      _ => Err("Unsupported response type".to_string())
+    }
+  }?;
 
   return Ok(Response {
     status,
