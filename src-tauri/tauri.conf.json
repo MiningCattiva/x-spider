@@ -42,6 +42,10 @@
                 "validator": "^(\\select,)?.+$"
               }
             ]
+          },
+          {
+            "name": "binaries/aria2c",
+            "sidecar": true
           }
         ]
       },
@@ -63,6 +67,9 @@
         "icons/128x128@2x.png",
         "icons/icon.icns",
         "icons/icon.ico"
+      ],
+      "externalBin": [
+        "binaries/aria2c"
       ]
     },
     "security": {
