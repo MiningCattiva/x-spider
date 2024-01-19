@@ -1,26 +1,25 @@
 /* eslint-disable react/prop-types */
-import { Avatar, Input, Modal, message } from 'antd';
+import { Avatar, Form, Input, Modal, message } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useAppStateStore } from '../stores/app-state';
 import { getAccountInfo } from '../twitter/api';
 import { TwitterAccountInfo } from '../interfaces/TwitterAccountInfo';
 import { LogoutOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import FormItem from 'antd/es/form/FormItem';
+import { useForm } from 'antd/es/form/Form';
+import { stringifyCookie } from '../utils/cookie';
 
 export const Account: React.FC = () => {
   const [cookieString, setCookieString] = useAppStateStore((state) => [
     state.cookieString,
     state.setCookieString,
   ]);
-  const [modalInput, setModalInput] = useState(cookieString);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [accountInfo, setAccountInfo] = useState<TwitterAccountInfo | null>(
     null,
   );
-
-  useEffect(() => {
-    setModalInput(cookieString);
-  }, [cookieString]);
+  const [form] = useForm();
 
   useEffect(() => {
     (async () => {
@@ -38,20 +37,25 @@ export const Account: React.FC = () => {
     })();
   }, [cookieString]);
 
-  const onModalOk = async () => {
+  const onFormFinished = async (values: any) => {
     setModalLoading(true);
+    const newCookieString = stringifyCookie(values);
 
     try {
-      const accountInfo = await getAccountInfo(modalInput);
+      const accountInfo = await getAccountInfo(newCookieString);
       setAccountInfo(accountInfo);
       setModalOpen(false);
-      setCookieString(modalInput);
+      setCookieString(newCookieString);
     } catch (err: any) {
       console.error(err);
       message.error('无法登录，请检测 CookieString 是否正确');
     } finally {
       setModalLoading(false);
     }
+  };
+
+  const onModalOk = async () => {
+    form.submit();
   };
 
   return (
@@ -75,13 +79,13 @@ export const Account: React.FC = () => {
                 title="前往个人主页"
                 aria-label="前往个人主页"
                 target="_blank"
-                href={`https://twitter.com/${accountInfo.name}`}
+                href={`https://twitter.com/${accountInfo.screenName}`}
                 rel="noreferrer"
               >
                 <Avatar size={50} src={accountInfo.avatar} alt="头像" />
               </a>
               <div className="text-white mt-1 font-bold">
-                {accountInfo.name}
+                {accountInfo.screenName}
               </div>
               <div>
                 <button
@@ -103,18 +107,39 @@ export const Account: React.FC = () => {
         confirmLoading={modalLoading}
         onCancel={() => setModalOpen(false)}
         open={modalOpen}
-        title="设置 Twitter 的 CookieString"
+        title="设置 Twitter 的 Cookie"
       >
-        <Input.TextArea
-          placeholder="请输入 CookieString"
-          autoSize={{
-            maxRows: 10,
-            minRows: 10,
-          }}
-          rows={10}
-          value={modalInput}
-          onChange={(e) => setModalInput(e.target.value)}
-        />
+        <Form
+          labelCol={{ span: 5 }}
+          form={form}
+          className="mt-4"
+          onFinish={onFormFinished}
+        >
+          <FormItem
+            name="auth_token"
+            label="auth_token"
+            rules={[
+              {
+                type: 'string',
+                required: true,
+              },
+            ]}
+          >
+            <Input placeholder="名称为 auth_token 的值" />
+          </FormItem>
+          <FormItem
+            name="ct0"
+            label="ct0"
+            rules={[
+              {
+                type: 'string',
+                required: true,
+              },
+            ]}
+          >
+            <Input placeholder="名称为 ct0 的值" />
+          </FormItem>
+        </Form>
         <p className="mt-2">
           <a
             href="https://twitter.com"

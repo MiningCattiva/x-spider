@@ -8,8 +8,6 @@ import { useStoreLoaded } from './hooks/useStoreLoaded';
 import { settingsLoadedEvent } from './events/settings-loaded';
 import { appStateLoadedEvent } from './events/app-state-loaded';
 import { LoadingOutlined } from '@ant-design/icons';
-// import './stores/app-state';
-// import './stores/settings';
 
 export const App: React.FC = () => {
   const settingsLoaded = useStoreLoaded(settingsLoadedEvent);

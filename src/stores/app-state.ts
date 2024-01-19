@@ -6,13 +6,32 @@ import { appStateLoadedEvent } from '../events/app-state-loaded';
 export interface AppStateStore {
   cookieString: string;
   setCookieString: (cookieString: string) => void;
+
+  searchHistory: string[];
+  addSearchHistory: (keyword: string) => void;
+  clearSearchHistory: () => void;
 }
 
 export const useAppStateStore = create(
   persist<AppStateStore>(
-    (set) => ({
+    (set, get) => ({
       cookieString: '',
       setCookieString: (cookieString) => set({ cookieString }),
+      searchHistory: [],
+      addSearchHistory: (keyword) => {
+        const history = get().searchHistory;
+        const existsIndex = history.findIndex(
+          (v) => v === keyword.toLowerCase(),
+        );
+
+        if (existsIndex >= 0) {
+          history.splice(existsIndex, 1);
+        }
+
+        history.unshift(keyword.toLowerCase());
+        set({ searchHistory: history });
+      },
+      clearSearchHistory: () => set({ searchHistory: [] }),
     }),
     {
       name: 'app-state',
@@ -22,6 +41,7 @@ export const useAppStateStore = create(
           appStateLoadedEvent.emit();
         };
       },
+      version: 1,
     },
   ),
 );

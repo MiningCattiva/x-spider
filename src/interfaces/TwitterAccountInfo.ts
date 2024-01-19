@@ -1,4 +1,4 @@
 export interface TwitterAccountInfo {
-  name: string;
+  screenName: string;
   avatar: string;
 }
