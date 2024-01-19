@@ -17,7 +17,7 @@ export const App: React.FC = () => {
 
   return (
     <ConfigProvider theme={ANTD_THEME} autoInsertSpaceInButton={false}>
-      <div className="css-var-r1 select-none text-gray-800 relative w-screen h-screen flex flex-col overflow-hidden">
+      <div className="css-var-r0 select-none text-gray-800 relative w-screen h-screen flex flex-col overflow-hidden">
         {loading && (
           <div className="w-screen h-screen flex flex-col items-center justify-center">
             <LoadingOutlined className="text-5xl text-ant-color-primary" />
