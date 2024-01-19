@@ -66,16 +66,25 @@ export const Account: React.FC = () => {
           className="flex flex-col justify-center items-center border-b-[1px] py-6 border-[rgba(255,255,255,0.5)]"
         >
           {!accountInfo && (
-            <button
-              className="bg-transparent"
-              onClick={() => setModalOpen(true)}
-            >
-              <Avatar size={50}>登录</Avatar>
-            </button>
+            <>
+              <button
+                className="bg-transparent"
+                onClick={() => setModalOpen(true)}
+              >
+                <Avatar size={50}>登录</Avatar>
+              </button>
+              <span className="sr-only" role="alert">
+                账号未登录
+              </span>
+            </>
           )}
           {accountInfo && (
             <>
+              <span className="sr-only" role="alert">
+                账号 {accountInfo.screenName} 已登录
+              </span>
               <a
+                className="focus:outline !outline-4 !outline-black"
                 title="前往个人主页"
                 aria-label="前往个人主页"
                 target="_blank"
@@ -154,6 +163,11 @@ export const Account: React.FC = () => {
             <span className="ml-1">寻找 CookieString 的方法</span>
           </a>
         </p>
+        {modalLoading && (
+          <span className="sr-only" role="status">
+            登录中，请稍候
+          </span>
+        )}
       </Modal>
     </>
   );

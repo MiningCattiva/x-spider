@@ -98,20 +98,30 @@ export const Homepage: React.FC = () => {
               >
                 加载
               </Button>
+              {userReq.loading && (
+                <span className="sr-only" role="status">
+                  加载用户信息中
+                </span>
+              )}
             </Space.Compact>
             {searchHistory.length > 0 && (
-              <section aria-label="搜索历史" className="text-sm mt-2">
+              <section
+                aria-label="搜索历史"
+                className="text-sm mt-2"
+                tabIndex={0}
+              >
                 <span>
-                  搜索历史
+                  搜索历史（
                   <Button
                     type="link"
                     size="small"
                     onClick={clearSearchHistory}
                     className="!p-0"
                   >
-                    （清空）
+                    清空
+                    <span className="sr-only">历史记录</span>
                   </Button>
-                  ：
+                  ） ：
                 </span>
                 <ul className="inline">
                   {searchHistory.map((sn) => (
@@ -124,6 +134,7 @@ export const Homepage: React.FC = () => {
                           startSearch(sn);
                         }}
                       >
+                        <span className="sr-only">搜索</span>
                         {sn}
                       </Button>
                     </li>
@@ -137,8 +148,12 @@ export const Homepage: React.FC = () => {
               aria-label="用户信息"
               className="bg-white border-[1px] border-gray-300 rounded-md mt-4"
             >
+              <span className="sr-only" role="status">
+                用户信息加载完成，当前搜索用户：{userReq.data.name}
+              </span>
               <a
                 title="跳转到主页"
+                aria-label={`跳转到 ${userReq.data.name} 的主页`}
                 className="flex items-center p-4 focus:outline !outline-4 !outline-cyan-200"
                 href={`https://twitter.com/${userReq.data.screenName}`}
                 target="_blank"
@@ -166,15 +181,28 @@ export const Homepage: React.FC = () => {
           className="overflow-y-auto pb-10 overflow-hidden h-[inherit]"
           ref={scrollingRef}
         >
-          {mediaReq.loading && (
-            <div>
-              <LoadingOutlined className="text-ant-color-primary mr-2" />
-              加载中图片中...
+          {mediaReq.loading ? (
+            <div role="status">
+              <LoadingOutlined
+                className="text-ant-color-primary mr-2"
+                aria-hidden
+              />
+              加载图片列表中...
+            </div>
+          ) : (
+            <div role="status" className="sr-only">
+              列表加载完成
             </div>
           )}
           <ul className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
             {mediaReq.data?.list?.map((item) => (
               <li
+                aria-label={
+                  item.type === 'photo'
+                    ? '推文图片'
+                    : `推文视频，时长${dayjs.duration(item.videoInfo.duration).format('mm分ss秒')}`
+                }
+                tabIndex={0}
                 key={item.id}
                 className="relative h-[15rem] overflow-hidden bg-white group"
               >
@@ -203,15 +231,25 @@ export const Homepage: React.FC = () => {
                 </div>
               </li>
             ))}
-            {mediaReq.loadingMore && (
-              <li className="h-[15rem] flex items-center justify-center bg-white">
-                <LoadingOutlined className="text-6xl text-ant-color-primary" />
+            {!mediaReq.loading && mediaReq.loadingMore && (
+              <li
+                className="h-[15rem] flex items-center justify-center bg-white"
+                tabIndex={0}
+              >
+                <LoadingOutlined
+                  className="text-6xl text-ant-color-primary"
+                  aria-hidden
+                />
+                <span className="sr-only">加载更多图片中</span>
               </li>
             )}
           </ul>
           {userReq.data?.id && !mediaReq.loading && mediaReq.noMore && (
-            <div className="mt-4 text-sm text-ant-color-text-secondary text-center">
-              没有更多数据了
+            <div
+              className="mt-4 text-sm text-ant-color-text-secondary text-center"
+              role="alert"
+            >
+              列表没有更多数据了
             </div>
           )}
         </div>
