@@ -1,17 +1,18 @@
+import dayjs from 'dayjs';
+import * as R from 'ramda';
 import { Response } from '../interfaces/Response';
 import { TwitterAccountInfo } from '../interfaces/TwitterAccountInfo';
-import { TwitterUser } from '../interfaces/TwitterUser';
-import { request } from '../ipc/network';
-import { useAppStateStore } from '../stores/app-state';
-import * as R from 'ramda';
-import { parseCookie } from '../utils/cookie';
 import {
   TwitterMedia,
   TwitterMediaBase,
   TwitterMediaPhoto,
   TwitterMediaVideo,
 } from '../interfaces/TwitterMedia';
-import dayjs from 'dayjs';
+import { TwitterPost } from '../interfaces/TwitterPost';
+import { TwitterUser } from '../interfaces/TwitterUser';
+import { request } from '../ipc/network';
+import { useAppStateStore } from '../stores/app-state';
+import { parseCookie } from '../utils/cookie';
 
 async function getCookieString() {
   return useAppStateStore.getState().cookieString;
@@ -110,13 +111,17 @@ export async function getUser(screenName: string): Promise<TwitterUser> {
     id: R.path<string>(['data', 'user', 'result', 'rest_id'])(
       resp.body,
     ) as string,
+    mediaCount: data?.media_count,
   };
 }
 
-export async function getUserMedia(
+export async function getTwitterPosts(
   userId: string,
   cursor?: string,
-): Promise<[TwitterMedia[], string | null]> {
+): Promise<{
+  twitterPosts: TwitterPost[];
+  cursor: string | null;
+}> {
   const resp = await request({
     method: 'GET',
     url: 'https://twitter.com/i/api/graphql/cEjpJXA15Ok78yO4TUQPeQ/UserMedia',
@@ -164,9 +169,10 @@ export async function getUserMedia(
 
   const toTwitterMediaBase: (v: any) => TwitterMediaBase = (v: any) => ({
     id: v.id_str,
-    url: v.expanded_url,
-    pic: v.media_url_https,
-    createAt: dayjs(v.created_at).unix() * 1000,
+    url: v.media_url_https,
+    width: v.original_info.width,
+    height: v.original_info.height,
+    twitterPostId: v.twitterPostId,
   });
 
   const toPhoto: (v: any) => TwitterMediaPhoto = (v: any) => ({
@@ -184,34 +190,9 @@ export async function getUserMedia(
         contentType: item.contentType,
         url: item.url,
       })),
+      aspectRatio: v.aspect_ratio,
     },
   });
-
-  const mapModuleItems = R.pipe(
-    R.map(
-      R.pipe(
-        R.path(['item', 'itemContent', 'tweet_results', 'result', 'legacy']),
-        (legacy: any) =>
-          R.pipe(
-            R.path<any>(['entities', 'media']),
-            R.map<any, TwitterMedia | null>(
-              R.pipe(
-                R.assoc('createAt', dayjs(legacy.created_at).unix() * 1000),
-                R.cond([
-                  [R.propEq('photo', 'type'), toPhoto],
-                  // @ts-ignore
-                  [R.propEq('video', 'type'), toVideo],
-                  // @ts-ignore
-                  [R.T, R.always(null)],
-                ]),
-              ),
-            ),
-            R.filter(R.isNotNil),
-          )(legacy),
-      ),
-    ),
-    R.flatten,
-  );
 
   const pathToInstructions = R.path<any>([
     'data',
@@ -222,40 +203,82 @@ export async function getUserMedia(
     'instructions',
   ]);
 
-  const extractFirst = R.pipe(
+  const pathToModuleItemsFirst = R.pipe(
     pathToInstructions,
     R.find(R.pathEq('TimelineAddEntries', ['type'])),
     R.prop('entries'),
     R.find(R.pathEq('TimelineTimelineModule', ['content', 'entryType'])),
-    R.ifElse(
-      R.isNil,
-      R.always([]),
-      R.pipe(R.path<any>(['content', 'items']), mapModuleItems),
-    ),
+    R.ifElse(R.isNil, R.always([]), R.path<any>(['content', 'items'])),
   );
 
-  const extractMore = R.pipe(
+  const pathToModuleItemsMore = R.pipe(
     pathToInstructions,
     R.find(R.pathEq('TimelineAddToModule', ['type'])),
-    R.ifElse(
-      R.isNil,
-      R.always([]),
-      R.pipe(R.prop('moduleItems'), mapModuleItems),
+    R.ifElse(R.isNil, R.always([]), R.prop('moduleItems')),
+  );
+
+  const pathToModuleItems = R.ifElse<any, any, any>(
+    () => !cursor,
+    pathToModuleItemsFirst,
+    pathToModuleItemsMore,
+  );
+
+  const pathToTwitterPostItems = R.pipe(
+    pathToModuleItems,
+    R.map(R.path<any>(['item', 'itemContent', 'tweet_results', 'result'])),
+  );
+
+  const mapTwitterMedias = R.pipe<
+    any[],
+    (TwitterMedia | null)[],
+    TwitterMedia[]
+  >(
+    R.map<any, TwitterMedia | null>(
+      R.cond<any, TwitterMedia | null>([
+        [R.propEq('photo', 'type'), toPhoto],
+        [R.propEq('video', 'type'), toVideo],
+        [R.T, R.always(null)],
+      ]),
     ),
+    R.filter<TwitterMedia | null, TwitterMedia>(R.isNotNil),
   );
 
-  const list: TwitterMedia[] = R.defaultTo(
+  const mapTwitterPosts = R.map<any, TwitterPost>((item) => {
+    return {
+      id: item.rest_id,
+      views: Number(item.views.count),
+      createdAt: dayjs(item.legacy.created_at).unix() * 1000,
+      ownerId: item.core.user_results.result.rest_id,
+      bookmarkCount: item.legacy.bookmark_count,
+      bookmarked: item.legacy.bookmarked,
+      favoriteCount: item.legacy.favorite_count,
+      favorited: item.legacy.favorited,
+      fullText: item.legacy.full_text,
+      lang: item.legacy.lang,
+      possiblySensitive: item.legacy.possibly_sensitive,
+      replyCount: item.legacy.reply_count,
+      retweeted: item.legacy.retweeted,
+      retweetCount: item.legacy.retweet_count,
+      medias: mapTwitterMedias(item.legacy.entities.media),
+      tags: R.pipe<any, any[], string[]>(
+        R.path<any>(['legacy', 'entities', 'hashtags']),
+        R.map(R.prop('text')),
+      )(item),
+    };
+  });
+
+  const extractTwitterPosts = R.pipe(pathToTwitterPostItems, mapTwitterPosts);
+
+  const twitterPosts: TwitterPost[] = R.defaultTo(
     [],
-    R.ifElse(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      (_) => !!cursor,
-      extractMore,
-      extractFirst,
-    )(resp.body) as TwitterMedia[],
+    extractTwitterPosts(resp.body) as TwitterPost[],
   );
 
-  if (list.length === 0) {
-    return [[], null];
+  if (twitterPosts.length === 0) {
+    return {
+      cursor: null,
+      twitterPosts: [],
+    };
   }
 
   const nextCursor: null | string = R.defaultTo(
@@ -276,5 +299,8 @@ export async function getUserMedia(
     )(resp.body) as null | string,
   );
 
-  return [list, nextCursor];
+  return {
+    twitterPosts,
+    cursor: nextCursor,
+  };
 }

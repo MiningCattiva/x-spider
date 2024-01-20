@@ -3,4 +3,5 @@ export interface TwitterUser {
   avatar: string;
   name: string;
   id: string;
+  mediaCount: number;
 }
