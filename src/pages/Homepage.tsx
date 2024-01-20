@@ -1,77 +1,63 @@
 /* eslint-disable react/prop-types */
 import { LoadingOutlined } from '@ant-design/icons';
-import { useInfiniteScroll, useRequest } from 'ahooks';
 import { Avatar, Button, Input, Space, message } from 'antd';
-import React, { useRef, useState } from 'react';
-import { PageHeader } from '../components/PageHeader';
-import { TwitterMedia } from '../interfaces/TwitterMedia';
-import { useAppStateStore } from '../stores/app-state';
-import { getUser, getUserMedia } from '../twitter/api';
 import dayjs from 'dayjs';
+import React, { useRef } from 'react';
+import { PageHeader } from '../components/PageHeader';
+import { useAppStateStore } from '../stores/app-state';
+import { useHomepageStore } from '../stores/homepage';
 
 export const Homepage: React.FC = () => {
-  const [screenName, setTargetScreenName] = useState('');
+  const {
+    keyword,
+    setKeyword,
+    userInfo,
+    clearUser,
+    loadMediaList,
+    loadMoreMediaList,
+    loadUser,
+    mediaList,
+    clearMediaList,
+  } = useHomepageStore();
   const [searchHistory, addSearchHistory, clearSearchHistory] =
     useAppStateStore((s) => [
       s.searchHistory,
       s.addSearchHistory,
       s.clearSearchHistory,
     ]);
-  const scrollingRef = useRef(null);
+  const searchAbortControllerRef = useRef<AbortController>();
 
-  const userReq = useRequest(
-    async (screenName: string) => {
-      return getUser(screenName);
-    },
-    {
-      manual: true,
-      onError(e) {
-        message.error(e.message);
-      },
-    },
-  );
-  const mediaReq = useInfiniteScroll<{
-    list: TwitterMedia[];
-    cursor: string | null;
-  }>(
-    async (data) => {
-      if (!userReq.data?.id) {
-        return {
-          list: [],
-          cursor: null,
-        };
-      }
-      const cursor = data?.cursor || undefined;
-      const [list, nextCursor] = await getUserMedia(userReq.data?.id, cursor);
-      return {
-        list,
-        cursor: nextCursor,
-      };
-    },
-    {
-      reloadDeps: [userReq.data?.id],
-      isNoMore(data) {
-        return data?.cursor === null;
-      },
-      target: scrollingRef,
-      onError(e) {
-        console.error(e);
-        message.error(e.message);
-      },
-    },
-  );
-
-  const startSearch = (sn: string) => {
+  const startSearch = async (sn: string) => {
     if (!sn) return;
     sn = sn.trim();
-    setTargetScreenName(sn);
+    setKeyword(sn);
     addSearchHistory(sn);
-    mediaReq.mutate({
-      list: [],
-      cursor: null,
-    });
-    userReq.mutate(undefined);
-    userReq.run(sn);
+
+    if (searchAbortControllerRef.current) {
+      searchAbortControllerRef.current.abort('Another search');
+    }
+
+    clearUser();
+    clearMediaList();
+
+    const abortion = (searchAbortControllerRef.current = new AbortController());
+    try {
+      await loadUser(sn, searchAbortControllerRef.current);
+      await loadMediaList(searchAbortControllerRef.current);
+    } catch (err: any) {
+      if (abortion.signal.aborted) return;
+      console.error(err);
+      message.error(err);
+    }
+  };
+
+  const onMediaListScroll = (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
+    if (mediaList.loading || !mediaList.cursor) return;
+    const el = event.target as HTMLDivElement;
+    const threshold = el.clientHeight;
+    if (el.scrollHeight - el.scrollTop <= el.clientHeight + threshold) {
+      loadMoreMediaList();
+    }
   };
 
   return (
@@ -84,21 +70,22 @@ export const Homepage: React.FC = () => {
               <Input
                 type="search"
                 autoComplete="search"
-                onPressEnter={() => startSearch(screenName)}
-                value={screenName}
-                onChange={(e) => setTargetScreenName(e.target.value)}
+                disabled={userInfo.loading}
+                onPressEnter={() => startSearch(keyword)}
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
                 placeholder="请输入账号 ID，如：shiratamacaron"
                 className="text-center"
               />
               <Button
-                disabled={!screenName}
-                loading={userReq.loading}
-                onClick={() => startSearch(screenName)}
+                disabled={!keyword}
+                loading={userInfo.loading}
+                onClick={() => startSearch(keyword)}
                 type="primary"
               >
                 加载
               </Button>
-              {userReq.loading && (
+              {userInfo.loading && (
                 <span className="sr-only" role="status">
                   加载用户信息中
                 </span>
@@ -127,10 +114,11 @@ export const Homepage: React.FC = () => {
                   {searchHistory.map((sn) => (
                     <li key={sn} className="inline">
                       <Button
+                        disabled={userInfo.loading}
                         type="link"
                         size="small"
                         onClick={() => {
-                          setTargetScreenName(sn);
+                          setKeyword(sn);
                           startSearch(sn);
                         }}
                       >
@@ -143,29 +131,29 @@ export const Homepage: React.FC = () => {
               </section>
             )}
           </section>
-          {!userReq.loading && userReq.data && (
+          {userInfo.data && (
             <section
               aria-label="用户信息"
               className="bg-white border-[1px] border-gray-300 rounded-md mt-4"
             >
               <span className="sr-only" role="status">
-                用户信息加载完成，当前搜索用户：{userReq.data.name}
+                用户信息加载完成，当前搜索用户：{userInfo.data.name}
               </span>
               <a
                 title="跳转到主页"
-                aria-label={`跳转到 ${userReq.data.name} 的主页`}
+                aria-label={`跳转到 ${userInfo.data.name} 的主页`}
                 className="flex items-center p-4 focus:outline !outline-4 !outline-cyan-200"
-                href={`https://twitter.com/${userReq.data.screenName}`}
+                href={`https://twitter.com/${userInfo.data.screenName}`}
                 target="_blank"
                 rel="noreferrer"
               >
                 <div>
-                  <Avatar src={userReq.data.avatar} size={50} alt="头像" />
+                  <Avatar src={userInfo.data.avatar} size={50} alt="头像" />
                 </div>
                 <div className="ml-2">
-                  <p>{userReq.data.name}</p>
+                  <p>{userInfo.data.name}</p>
                   <p className="text-ant-color-text-secondary text-sm mt-1">
-                    @{userReq.data.screenName}
+                    @{userInfo.data.screenName}
                   </p>
                 </div>
               </a>
@@ -178,10 +166,10 @@ export const Homepage: React.FC = () => {
         aria-label="图片预览"
       >
         <div
+          onScroll={onMediaListScroll}
           className="overflow-y-auto pb-10 overflow-hidden h-[inherit]"
-          ref={scrollingRef}
         >
-          {mediaReq.loading ? (
+          {mediaList.loading ? (
             <div role="status">
               <LoadingOutlined
                 className="text-ant-color-primary mr-2"
@@ -195,7 +183,7 @@ export const Homepage: React.FC = () => {
             </div>
           )}
           <ul className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
-            {mediaReq.data?.list?.map((item) => (
+            {mediaList.list?.map((item) => (
               <li
                 aria-label={
                   item.type === 'photo'
@@ -231,7 +219,7 @@ export const Homepage: React.FC = () => {
                 </div>
               </li>
             ))}
-            {!mediaReq.loading && mediaReq.loadingMore && (
+            {mediaList.loading && mediaList.list.length > 0 && (
               <li
                 className="h-[15rem] flex items-center justify-center bg-white"
                 tabIndex={0}
@@ -244,7 +232,7 @@ export const Homepage: React.FC = () => {
               </li>
             )}
           </ul>
-          {userReq.data?.id && !mediaReq.loading && mediaReq.noMore && (
+          {!mediaList.loading && userInfo.data && !mediaList.cursor && (
             <div
               className="mt-4 text-sm text-ant-color-text-secondary text-center"
               role="alert"
