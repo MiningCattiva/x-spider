@@ -1,9 +1,8 @@
 /* eslint-disable react/prop-types */
-import { LoadingOutlined } from '@ant-design/icons';
 import { Avatar, Button, Input, Space, message } from 'antd';
-import dayjs from 'dayjs';
 import React, { useRef } from 'react';
 import { PageHeader } from '../components/PageHeader';
+import { PostListGridView } from '../components/homepage/PostListGridView';
 import { useAppStateStore } from '../stores/app-state';
 import { useHomepageStore } from '../stores/homepage';
 
@@ -13,11 +12,9 @@ export const Homepage: React.FC = () => {
     setKeyword,
     userInfo,
     clearUser,
-    loadMediaList,
-    loadMoreMediaList,
+    loadPostList: loadMediaList,
     loadUser,
-    mediaList,
-    clearMediaList,
+    clearPostList: clearMediaList,
   } = useHomepageStore();
   const [searchHistory, addSearchHistory, clearSearchHistory] =
     useAppStateStore((s) => [
@@ -48,15 +45,6 @@ export const Homepage: React.FC = () => {
       if (abortion.signal.aborted) return;
       console.error(err);
       message.error(err);
-    }
-  };
-
-  const onMediaListScroll = (event: React.UIEvent<HTMLDivElement, UIEvent>) => {
-    if (mediaList.loading || !mediaList.cursor) return;
-    const el = event.target as HTMLDivElement;
-    const threshold = el.clientHeight;
-    if (el.scrollHeight - el.scrollTop <= el.clientHeight + threshold) {
-      loadMoreMediaList();
     }
   };
 
@@ -163,84 +151,9 @@ export const Homepage: React.FC = () => {
       </div>
       <section
         className="relative grow mt-4 pb-4 overflow-hidden h-full"
-        aria-label="图片预览"
+        aria-label="内容预览"
       >
-        <div
-          onScroll={onMediaListScroll}
-          className="overflow-y-auto pb-10 overflow-hidden h-[inherit]"
-        >
-          {mediaList.loading ? (
-            <div role="status">
-              <LoadingOutlined
-                className="text-ant-color-primary mr-2"
-                aria-hidden
-              />
-              加载图片列表中...
-            </div>
-          ) : (
-            <div role="status" className="sr-only">
-              列表加载完成
-            </div>
-          )}
-          <ul className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
-            {mediaList.list?.map((item) => (
-              <li
-                aria-label={
-                  item.type === 'photo'
-                    ? '推文图片'
-                    : `推文视频，时长${dayjs.duration(item.videoInfo.duration).format('mm分ss秒')}`
-                }
-                tabIndex={0}
-                key={item.id}
-                className="relative h-[15rem] overflow-hidden bg-white group"
-              >
-                <div className="h-full">
-                  <img
-                    alt="推文图片"
-                    src={`${item.pic}?format=jpg&name=small`}
-                    loading="lazy"
-                    className="object-cover w-full h-full transform transition-transform group-hover:scale-105"
-                  />
-                  {item.type === 'video' && (
-                    <span className="block absolute right-2 bottom-2 text-white bg-[rgba(0,0,0,0.6)] rounded-sm px-[0.3rem] text-sm">
-                      <span className="sr-only">视频时长：</span>
-                      {dayjs.duration(item.videoInfo.duration).format('mm:ss')}
-                    </span>
-                  )}
-                  <div className="absolute top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.7)] transition-opacity opacity-0 group-hover:opacity-100 has-[:focus]:opacity-100">
-                    <ul className="w-full h-full flex flex-col items-center justify-center px-6 space-y-2">
-                      <li className="w-full">
-                        <button className="w-full bg-transparent border-[1px] rounded-full text-white py-1 text-center transition-colors hover:bg-white hover:text-black focus:bg-white focus:text-black">
-                          打开推文
-                        </button>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </li>
-            ))}
-            {mediaList.loading && mediaList.list.length > 0 && (
-              <li
-                className="h-[15rem] flex items-center justify-center bg-white"
-                tabIndex={0}
-              >
-                <LoadingOutlined
-                  className="text-6xl text-ant-color-primary"
-                  aria-hidden
-                />
-                <span className="sr-only">加载更多图片中</span>
-              </li>
-            )}
-          </ul>
-          {!mediaList.loading && userInfo.data && !mediaList.cursor && (
-            <div
-              className="mt-4 text-sm text-ant-color-text-secondary text-center"
-              role="alert"
-            >
-              列表没有更多数据了
-            </div>
-          )}
-        </div>
+        <PostListGridView />
       </section>
     </div>
   );
