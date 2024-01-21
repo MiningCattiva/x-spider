@@ -1,4 +1,4 @@
-import { DownloadFilter } from "./DownloadFilter";
+import { DownloadFilter } from './DownloadFilter';
 
 export interface CreationTask {
   id: string;

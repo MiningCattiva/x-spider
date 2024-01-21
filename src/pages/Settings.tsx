@@ -23,9 +23,14 @@ export const Settings: React.FC = () => {
         >
           <SavePathSelector required />
         </Item>
-        <Item settingKey="fileNameTemplate" label='文件名格式' description='文件名中的非法字符将会被自动替换' validator={(val) => {
-          return Joi.string().required().validate(val).error?.message;
-        }} >
+        <Item
+          settingKey="fileNameTemplate"
+          label="文件名格式"
+          description="文件名中的非法字符将会被自动替换"
+          validator={(val) => {
+            return Joi.string().required().validate(val).error?.message;
+          }}
+        >
           <FileNameTemplateInput />
         </Item>
       </Section>

@@ -26,7 +26,7 @@ export const SavePathSelector: React.FC<SavePathSelectorProps> = ({
         onClick={async () => {
           const result = await dialog.open({
             defaultPath: value?.toString(),
-            title: '选择视频保存路径',
+            title: '选择保存路径',
             directory: true,
           });
 

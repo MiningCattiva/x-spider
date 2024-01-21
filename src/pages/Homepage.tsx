@@ -45,7 +45,7 @@ export const Homepage: React.FC = () => {
     } catch (err: any) {
       if (abortion.signal.aborted) return;
       console.error(err);
-      message.error(err);
+      message.error('加载失败，请稍后重试');
     }
   };
 

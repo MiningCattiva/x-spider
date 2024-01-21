@@ -89,17 +89,18 @@ export const PostListGridView: React.FC = () => {
                 user: userInfo.data!,
               });
               try {
-                await createDownloadTask(
+                await createDownloadTask({
                   post,
-                  userInfo.data!,
+                  user: userInfo.data!,
                   media,
                   fileName,
-                  savePath,
-                );
+                  dir: savePath,
+                  downloadUrl: media.url,
+                });
                 message.success('已添加到下载队列');
               } catch (err: any) {
                 console.error(err);
-                message.error(err);
+                message.error('创建下载任务失败');
               }
             },
           };

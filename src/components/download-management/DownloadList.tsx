@@ -7,7 +7,7 @@ import {
   FolderFilled,
   PauseOutlined,
 } from '@ant-design/icons';
-import { Avatar, Progress, message } from 'antd';
+import { Avatar, Button, Progress, message } from 'antd';
 import * as R from 'ramda';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { DownloadTask } from '../../interfaces/DownloadTask';
@@ -22,6 +22,7 @@ export interface DownloadListProps {
   filter: (task: DownloadTask) => boolean;
   sort?: (taskA: DownloadTask, taskB: DownloadTask) => number;
   onInScreenTasksChanged?: (tasks: DownloadTask[]) => void;
+  batchActions?: ('pauseAll' | 'unpauseAll' | 'deleteAll' | 'redownloadAll')[];
 }
 const ITEM_CLIENT_HEIGHT = 144;
 const ITEM_GAP = 16;
@@ -31,28 +32,42 @@ export const DownloadList: React.FC<DownloadListProps> = ({
   filter,
   sort,
   onInScreenTasksChanged,
+  batchActions,
 }) => {
   const {
     downloadTasks,
-    createDownloadTask,
     removeDownloadTask,
     pauseDownloadTask,
     unpauseDownloadTask,
+    pauseAllDownloadTask,
+    unpauseAllDownloadTask,
+    batchRemoveDownloadTasks,
+    redownloadTask,
+    batchRedownloadTask,
   } = useDownloadStore((s) => ({
     downloadTasks: s.downloadTasks,
-    createDownloadTask: s.createDownloadTask,
     removeDownloadTask: s.removeDownloadTask,
     pauseDownloadTask: s.pauseDownloadTask,
     unpauseDownloadTask: s.unpauseDownloadTask,
+    pauseAllDownloadTask: s.pauseAllDownloadTask,
+    unpauseAllDownloadTask: s.unpauseAllDownloadTask,
+    batchRemoveDownloadTasks: s.batchRemoveDownloadTasks,
+    redownloadTask: s.redownloadTask,
+    batchRedownloadTask: s.batchRedownloadTask,
   }));
   const scrollingRef = useRef<HTMLUListElement>(null);
 
-  const tasks = useMemo(() => {
-    return R.pipe<[DownloadTask[]], DownloadTask[], DownloadTask[]>(
+  const filterTasks = useCallback(
+    R.pipe<[DownloadTask[]], DownloadTask[], DownloadTask[]>(
       R.filter(filter),
       sort ? R.sort(sort) : R.identity,
-    )(downloadTasks)
-  }, [downloadTasks]);
+    ),
+    [sort, filter],
+  );
+
+  const tasks = useMemo(() => {
+    return filterTasks(downloadTasks);
+  }, [downloadTasks, filterTasks]);
 
   const calculateInViewTasks = useCallback(() => {
     const el = scrollingRef.current;
@@ -70,8 +85,8 @@ export const DownloadList: React.FC<DownloadListProps> = ({
   useEffect(() => {
     return () => {
       onInScreenTasksChanged?.([]);
-    }
-  }, [onInScreenTasksChanged])
+    };
+  }, [onInScreenTasksChanged]);
 
   useEffect(() => {
     if (!onInScreenTasksChanged) return;
@@ -98,11 +113,75 @@ export const DownloadList: React.FC<DownloadListProps> = ({
     };
   }, [onInScreenTasksChanged, calculateInViewTasks]);
 
+  const pauseAll = async () => {
+    await pauseAllDownloadTask();
+  };
+
+  const unpauseAll = async () => {
+    await unpauseAllDownloadTask();
+  };
+
+  const deleteAll = async () => {
+    if (
+      await dialog.confirm('确认要删除所有任务？\n已下载的文件不会被删除。', {
+        okLabel: '确认',
+        cancelLabel: '取消',
+        title: '警告',
+      })
+    ) {
+      const tasks = filterTasks(useDownloadStore.getState().downloadTasks);
+      await batchRemoveDownloadTasks(tasks.map((t) => t.gid));
+    }
+  };
+
+  const redownloadAll = async () => {
+    if (
+      await dialog.confirm('确认要重新下载全部任务？', {
+        okLabel: '确认',
+        cancelLabel: '取消',
+        title: '警告',
+      })
+    ) {
+      const tasks = filterTasks(useDownloadStore.getState().downloadTasks);
+      await batchRedownloadTask(tasks.map((t) => t.gid));
+    }
+  };
+
   return (
     <div className="flex flex-col grow h-full overflow-hidden pb-4">
       <section>
         <span>共 {tasks.length} 个下载任务。</span>
       </section>
+      <ul className="flex space-x-2 mt-3">
+        {batchActions?.includes('unpauseAll') && (
+          <li>
+            <Button onClick={unpauseAll} disabled={tasks.length === 0}>
+              全部开始
+            </Button>
+          </li>
+        )}
+        {batchActions?.includes('pauseAll') && (
+          <li>
+            <Button onClick={pauseAll} disabled={tasks.length === 0}>
+              全部暂停
+            </Button>
+          </li>
+        )}
+        {batchActions?.includes('redownloadAll') && (
+          <li>
+            <Button onClick={redownloadAll} disabled={tasks.length === 0}>
+              全部重下
+            </Button>
+          </li>
+        )}
+        {batchActions?.includes('deleteAll') && (
+          <li>
+            <Button onClick={deleteAll} disabled={tasks.length === 0} danger>
+              全部删除
+            </Button>
+          </li>
+        )}
+      </ul>
       <div className="grow pr-4 overflow-hidden relative h-full mt-4">
         <ul className="overflow-y-auto h-full" ref={scrollingRef}>
           {tasks.map((t) => {
@@ -110,18 +189,11 @@ export const DownloadList: React.FC<DownloadListProps> = ({
               name: '重新下载',
               onClick: async () => {
                 try {
-                  await createDownloadTask(
-                    t.post,
-                    t.user,
-                    t.media,
-                    t.fileName,
-                    t.dir,
-                  );
-                  await removeDownloadTask(t.gid);
+                  await redownloadTask(t.gid);
                   message.success('已开始重新下载该任务');
                 } catch (err) {
                   console.error(err);
-                  dialog.confirm('无法重新下载文件', {
+                  dialog.message('无法重新下载文件', {
                     type: 'error',
                   });
                 }
@@ -152,12 +224,15 @@ export const DownloadList: React.FC<DownloadListProps> = ({
               name: '删除',
               onClick: async () => {
                 if (
-                  await dialog.confirm('确认删除该任务？', {
-                    okLabel: '删除',
-                    cancelLabel: '取消',
-                    type: 'warning',
-                    title: '删除任务',
-                  })
+                  await dialog.confirm(
+                    '确认删除该任务？\n已下载的文件不会被删除。',
+                    {
+                      okLabel: '删除',
+                      cancelLabel: '取消',
+                      type: 'warning',
+                      title: '删除任务',
+                    },
+                  )
                 ) {
                   await removeDownloadTask(t.gid);
                 }
@@ -212,7 +287,11 @@ export const DownloadList: React.FC<DownloadListProps> = ({
                   href={buildPostUrl(t.user.screenName, t.post.id)}
                   target="_blank"
                   rel="noreferrer"
-                  className="shrink-0 w-36  overflow-hidden"
+                  className="shrink-0 overflow-hidden"
+                  style={{
+                    width: ITEM_CLIENT_HEIGHT,
+                    height: ITEM_CLIENT_HEIGHT,
+                  }}
                   title="打开推文页"
                 >
                   <img
@@ -221,7 +300,7 @@ export const DownloadList: React.FC<DownloadListProps> = ({
                     className="w-full h-full object-cover transition-transform transform hover:scale-105"
                   />
                 </a>
-                <div className="ml-4 overflow-y-auto pr-4 w-full h-full">
+                <div className="ml-4 overflow-hidden pr-4 w-full h-full">
                   <p
                     title={t.fileName}
                     className="text-ellipsis overflow-hidden whitespace-nowrap font-bold mt-2"
@@ -236,10 +315,8 @@ export const DownloadList: React.FC<DownloadListProps> = ({
                     className="text-xs flex items-center space-x-1 w-fit text-ant-color-text-secondary bg-gray-100 p-1 rounded-full pr-2 overflow-hidden"
                   >
                     <Avatar src={t.user.avatar} size={20} />
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap shrink">
-                      <span>{t.user.name}</span>
-                      <span>@{t.user.screenName}</span>
-                    </span>
+                    <span>{t.user.name}</span>
+                    <span>@{t.user.screenName}</span>
                   </a>
                   <div className="mt-2">
                     <TaskActions
