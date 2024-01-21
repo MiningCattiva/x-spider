@@ -7,11 +7,7 @@ export const showInFolder = createCrossPlatformInvoker<
   async windows(path: string, isFile = false) {
     await new shell.Command(
       'explorer',
-      [
-        isFile ? `/select,` : '',
-        // 防止空格被转义
-        ...path.split(' ')
-      ],
+      isFile ? [`/select,`, ...path.split(' ')] : [...path.split(' ')],
     ).execute();
   },
 });
