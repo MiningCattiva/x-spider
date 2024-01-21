@@ -1,12 +1,14 @@
 /* eslint-disable react/prop-types */
 import React, { HTMLAttributes } from 'react';
 
+export interface GridViewItemAction {
+  href?: string;
+  onClick?: () => void | Promise<void>;
+  name: string;
+}
+
 export interface GridViewItemActionsProps {
-  actions: {
-    href?: string;
-    onClick?: () => void;
-    name: string;
-  }[];
+  actions: GridViewItemAction[];
 }
 
 export const GridViewItemActions: React.FC<GridViewItemActionsProps> = ({

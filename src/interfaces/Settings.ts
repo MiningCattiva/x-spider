@@ -5,6 +5,7 @@ export interface Settings_V1 {
   };
   download: {
     savePath: string;
+    fileNameTemplate: string;
   };
 }
 

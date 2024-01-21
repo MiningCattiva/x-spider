@@ -8,12 +8,15 @@ import { useStoreLoaded } from './hooks/useStoreLoaded';
 import { settingsLoadedEvent } from './events/settings-loaded';
 import { appStateLoadedEvent } from './events/app-state-loaded';
 import { LoadingOutlined } from '@ant-design/icons';
+import { useTaskNotifications } from './hooks/useTaskNotifications';
 
 export const App: React.FC = () => {
   const settingsLoaded = useStoreLoaded(settingsLoadedEvent);
   const appStateLoaded = useStoreLoaded(appStateLoadedEvent);
   const currentRoute = useRouteStore((state) => state.route);
   const loading = ![settingsLoaded, appStateLoaded].every(Boolean);
+
+  useTaskNotifications();
 
   return (
     <ConfigProvider theme={ANTD_THEME} autoInsertSpaceInButton={false}>

@@ -7,8 +7,12 @@ import dayjs from 'dayjs';
 import * as R from 'ramda';
 import { TwitterPost } from '../../interfaces/TwitterPost';
 import { TwitterMedia } from '../../interfaces/TwitterMedia';
-import { GridViewItemActions } from './GridViewItemActions';
+import { GridViewItemAction, GridViewItemActions } from './GridViewItemActions';
 import { buildPostUrl } from '../../twitter/url';
+import { buildFileName } from '../../utils/file-name-template';
+import { useSettings } from '../../hooks/useSettings';
+import { useDownloadStore } from '../../stores/download';
+import { message } from 'antd';
 
 export const PostListGridView: React.FC = () => {
   const { userInfo, loadMorePostList, postList } = useHomepageStore(
@@ -17,6 +21,14 @@ export const PostListGridView: React.FC = () => {
       postList: state.postList,
       userInfo: state.userInfo,
     }),
+  );
+  const { value: fileNameTemplate } = useSettings<string>(
+    'download',
+    'fileNameTemplate',
+  );
+  const { value: savePath } = useSettings<string>('download', 'savePath');
+  const createDownloadTask = useDownloadStore(
+    (state) => state.createDownloadTask,
   );
 
   const mediaList = useMemo<(TwitterMedia & { postId: string })[]>(
@@ -59,52 +71,89 @@ export const PostListGridView: React.FC = () => {
         </div>
       )}
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
-        {mediaList.map((item) => (
-          <li
-            aria-label={
-              item.type === 'photo'
-                ? '推文图片'
-                : `推文视频，时长${dayjs.duration(item.videoInfo.duration).format('mm分ss秒')}`
-            }
-            tabIndex={0}
-            key={item.id}
-            className="relative h-[15rem] overflow-hidden bg-white group"
-          >
-            <div className="h-full">
-              <img
-                alt="推文图片"
-                src={`${item.url}?format=jpg&name=small`}
-                loading="lazy"
-                className="object-cover w-full h-full transform transition-transform group-hover:scale-105"
-              />
-              {item.type === 'video' && (
-                <span className="block absolute right-2 bottom-2 text-white bg-[rgba(0,0,0,0.6)] rounded-sm px-[0.3rem] text-sm">
-                  <span className="sr-only">视频时长：</span>
-                  {dayjs.duration(item.videoInfo.duration).format('mm:ss')}
-                </span>
-              )}
-              <div className="absolute top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.7)] transition-opacity opacity-0 group-hover:opacity-100 has-[:focus]:opacity-100">
-                <GridViewItemActions
-                  actions={[
-                    {
-                      name: '打开推文',
-                      href: buildPostUrl(
-                        userInfo.data!.screenName,
-                        item.postId,
-                      ),
-                    },
-                    {
-                      name: '下载图片',
-                      onClick() {
-                        // TODO download
-                      },
-                    },
-                  ]}
+        {mediaList.map((media) => {
+          const actionOpen: GridViewItemAction = {
+            name: '打开推文',
+            href: buildPostUrl(userInfo.data!.screenName, media.postId),
+          };
+
+          const actionDownloadImage: GridViewItemAction = {
+            name: '下载图片',
+            async onClick() {
+              const post = postList.list.find(
+                (post) => post.id === media.postId,
+              )!;
+              const fileName = buildFileName(fileNameTemplate, {
+                media,
+                post,
+                user: userInfo.data!,
+              });
+              try {
+                await createDownloadTask(
+                  post,
+                  userInfo.data!,
+                  media,
+                  fileName,
+                  savePath,
+                );
+                message.success('已添加到下载队列');
+              } catch (err: any) {
+                console.error(err);
+                message.error(err);
+              }
+            },
+          };
+
+          const actionDownloadVideo: GridViewItemAction = {
+            name: '下载视频',
+            async onClick() {
+              // TODO
+            },
+          };
+
+          return (
+            <li
+              aria-label={
+                media.type === 'photo'
+                  ? '推文图片'
+                  : `推文视频，时长${dayjs.duration(media.videoInfo.duration).format('mm分ss秒')}`
+              }
+              tabIndex={0}
+              key={media.id}
+              className="relative h-[15rem] overflow-hidden bg-white group"
+            >
+              <div className="h-full">
+                <img
+                  alt="推文图片"
+                  src={`${media.url}?format=jpg&name=small`}
+                  loading="lazy"
+                  className="object-cover w-full h-full transform transition-transform group-hover:scale-105"
                 />
+                {media.type === 'video' && (
+                  <span className="block absolute right-2 bottom-2 text-white bg-[rgba(0,0,0,0.6)] rounded-sm px-[0.3rem] text-sm">
+                    <span className="sr-only">视频时长：</span>
+                    {dayjs.duration(media.videoInfo.duration).format('mm:ss')}
+                  </span>
+                )}
+                <div className="absolute top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.7)] transition-opacity opacity-0 group-hover:opacity-100 has-[:focus]:opacity-100">
+                  <GridViewItemActions
+                    actions={R.cond([
+                      [
+                        R.equals('photo'),
+                        R.always([actionOpen, actionDownloadImage]),
+                      ],
+                      [
+                        R.equals('video'),
+                        R.always([actionOpen, actionDownloadVideo]),
+                      ],
+                      [R.T, R.always([])],
+                    ])(media.type)}
+                  />
+                </div>
               </div>
-            </div>
-          </li>
-        ))}
+            </li>
+          );
+        })}
         {postList.loading && mediaList.length > 0 && (
           <li
             className="h-[15rem] flex items-center justify-center bg-white"

@@ -5,6 +5,7 @@ import { PageHeader } from '../components/PageHeader';
 import { PostListGridView } from '../components/homepage/PostListGridView';
 import { useAppStateStore } from '../stores/app-state';
 import { useHomepageStore } from '../stores/homepage';
+import { buildUserUrl } from '../twitter/url';
 
 export const Homepage: React.FC = () => {
   const {
@@ -12,7 +13,7 @@ export const Homepage: React.FC = () => {
     setKeyword,
     userInfo,
     clearUser,
-    loadPostList: loadMediaList,
+    loadPostList,
     loadUser,
     clearPostList: clearMediaList,
   } = useHomepageStore();
@@ -40,7 +41,7 @@ export const Homepage: React.FC = () => {
     const abortion = (searchAbortControllerRef.current = new AbortController());
     try {
       await loadUser(sn, searchAbortControllerRef.current);
-      await loadMediaList(searchAbortControllerRef.current);
+      await loadPostList(searchAbortControllerRef.current);
     } catch (err: any) {
       if (abortion.signal.aborted) return;
       console.error(err);
@@ -131,7 +132,7 @@ export const Homepage: React.FC = () => {
                 title="跳转到主页"
                 aria-label={`跳转到 ${userInfo.data.name} 的主页`}
                 className="flex items-center p-4 focus:outline !outline-4 !outline-cyan-200"
-                href={`https://twitter.com/${userInfo.data.screenName}`}
+                href={buildUserUrl(userInfo.data.screenName)}
                 target="_blank"
                 rel="noreferrer"
               >

@@ -2,7 +2,7 @@ import { useSettingsStore } from '../stores/settings';
 import * as R from 'ramda';
 
 export interface UseSettingsReturn<T> {
-  value: T | null;
+  value: T;
   setValue: (value: T) => Promise<void>;
 }
 
@@ -16,7 +16,7 @@ export function useSettings<T>(
   ]);
 
   return {
-    value: value === undefined ? null : value,
+    value: value as T,
     setValue: async (newVal) => {
       await updateOne(name, key, newVal);
     },
