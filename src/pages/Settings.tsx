@@ -7,6 +7,7 @@ import { DownloadOutlined, GlobalOutlined } from '@ant-design/icons';
 import Joi from 'joi';
 import { SavePathSelector } from '../components/settings/SavePathSelector';
 import { Input, Switch } from 'antd';
+import { FileNameTemplateInput } from '../components/settings/FileNameTemplateInput';
 
 export const Settings: React.FC = () => {
   return (
@@ -22,6 +23,11 @@ export const Settings: React.FC = () => {
         >
           <SavePathSelector required />
         </Item>
+        <Item settingKey="fileNameTemplate" label='文件名格式' description='文件名中的非法字符将会被自动替换' validator={(val) => {
+          return Joi.string().required().validate(val).error?.message;
+        }} >
+          <FileNameTemplateInput />
+        </Item>
       </Section>
       <Section title="代理" name="proxy" titleIcon={<GlobalOutlined />}>
         <Item label="启用代理" settingKey="enable" valuePropName="checked">
@@ -30,10 +36,8 @@ export const Settings: React.FC = () => {
         <Item
           label="代理地址"
           settingKey="url"
-          description="留空则表示使用系统代理"
           validator={(val) => {
             return Joi.string()
-              .allow('')
               .uri({
                 scheme: ['http'],
               })

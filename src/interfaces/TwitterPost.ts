@@ -2,7 +2,7 @@ import { TwitterMedia } from './TwitterMedia';
 
 export interface TwitterPost {
   id: string;
-  ownerId: number;
+  ownerId: string;
   createdAt: number;
   fullText: string;
   tags: string[];

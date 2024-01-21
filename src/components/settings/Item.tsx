@@ -7,7 +7,7 @@ import FormItem from 'antd/es/form/FormItem';
 import { Tooltip } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 
-const DEBOUNCE_DELAY = 500;
+const DEBOUNCE_DELAY = 200;
 
 export interface ItemProps {
   settingKey: string;

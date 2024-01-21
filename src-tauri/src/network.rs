@@ -44,7 +44,6 @@ pub async fn network_fetch(
         let proxy_http = reqwest::Proxy::http(proxy_url.clone()).or(Err("Failed to set proxy url".to_string()))?;
         let proxy_https = reqwest::Proxy::https(proxy_url.clone()).or(Err("Failed to set proxy url".to_string()))?;
         b = b.proxy(proxy_http).proxy(proxy_https);
-        println!("{}", proxy_url);
       }
     } else {
       // No proxy

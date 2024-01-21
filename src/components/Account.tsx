@@ -7,7 +7,7 @@ import { TwitterAccountInfo } from '../interfaces/TwitterAccountInfo';
 import { LogoutOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import FormItem from 'antd/es/form/FormItem';
 import { useForm } from 'antd/es/form/Form';
-import { stringifyCookie } from '../utils/cookie';
+import { parseCookie, stringifyCookie } from '../utils/cookie';
 
 export const Account: React.FC = () => {
   const [cookieString, setCookieString] = useAppStateStore((state) => [
@@ -57,6 +57,8 @@ export const Account: React.FC = () => {
   const onModalOk = async () => {
     form.submit();
   };
+
+  const cookies = parseCookie(cookieString);
 
   return (
     <>
@@ -123,6 +125,7 @@ export const Account: React.FC = () => {
           form={form}
           className="mt-4"
           onFinish={onFormFinished}
+          initialValues={cookies}
         >
           <FormItem
             name="auth_token"

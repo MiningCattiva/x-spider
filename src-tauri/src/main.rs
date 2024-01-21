@@ -6,7 +6,7 @@ mod network;
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-          network::network_fetch
+          network::network_fetch,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

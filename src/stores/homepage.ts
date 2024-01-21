@@ -47,18 +47,28 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
       },
     });
 
-    const value = await getUser(screenName);
+    try {
+      const value = await getUser(screenName);
 
-    if (abortController) {
-      abortController.signal.throwIfAborted();
+      if (abortController) {
+        abortController.signal.throwIfAborted();
+      }
+
+      set({
+        userInfo: {
+          loading: false,
+          data: value,
+        },
+      });
+    } catch(err: any) {
+      set({
+        userInfo: {
+          data: undefined,
+          loading: false,
+        },
+      });
+      throw err;
     }
-
-    set({
-      userInfo: {
-        loading: false,
-        data: value,
-      },
-    });
   },
   clearUser: () =>
     set({
@@ -97,19 +107,31 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
       },
     });
 
-    const { twitterPosts, cursor: nextCursor } = await getTwitterPosts(userId);
+    try {
+      const { twitterPosts, cursor: nextCursor } =
+        await getTwitterPosts(userId);
 
-    if (abortController) {
-      abortController.signal.throwIfAborted();
+      if (abortController) {
+        abortController.signal.throwIfAborted();
+      }
+
+      set({
+        postList: {
+          cursor: nextCursor,
+          list: twitterPosts,
+          loading: false,
+        },
+      });
+    } catch(err: any) {
+      set({
+        postList: {
+          cursor: null,
+          list: [],
+          loading: false,
+        },
+      });
+      throw err;
     }
-
-    set({
-      postList: {
-        cursor: nextCursor,
-        list: twitterPosts,
-        loading: false,
-      },
-    });
   },
   loadMorePostList: async (abortController) => {
     const postList = get().postList;
