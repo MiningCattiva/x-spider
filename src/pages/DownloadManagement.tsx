@@ -8,26 +8,28 @@ import { TabComplete } from '../components/download-management/TabComplete';
 
 export const DownloadManagement: React.FC = () => {
   return (
-    <div className='flex flex-col h-screen overflow-hidden relative'>
+    <div className="flex flex-col h-screen overflow-hidden relative">
       <PageHeader />
-      <div className='relative grow h-full overflow-hidden'>
-        <Tabs tabs={[
-          {
-            name: '下载中',
-            children: <TabDownloading />,
-            countStatus: ['active', 'paused', 'waiting']
-          },
-          {
-            name: '错误',
-            children: <TabError />,
-            countStatus: ['error']
-          },
-          {
-            name: '已完成',
-            children: <TabComplete />,
-            countStatus: ['complete']
-          }
-        ]} />
+      <div className="relative grow h-full overflow-hidden">
+        <Tabs
+          tabs={[
+            {
+              name: '下载中',
+              children: <TabDownloading />,
+              countStatus: ['active', 'paused', 'waiting'],
+            },
+            {
+              name: '错误',
+              children: <TabError />,
+              countStatus: ['error'],
+            },
+            {
+              name: '已完成',
+              children: <TabComplete />,
+              countStatus: ['complete'],
+            },
+          ]}
+        />
       </div>
     </div>
   );

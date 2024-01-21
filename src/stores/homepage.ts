@@ -60,7 +60,7 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
           data: value,
         },
       });
-    } catch(err: any) {
+    } catch (err: any) {
       set({
         userInfo: {
           data: undefined,
@@ -122,7 +122,7 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
           loading: false,
         },
       });
-    } catch(err: any) {
+    } catch (err: any) {
       set({
         postList: {
           cursor: null,

@@ -29,9 +29,7 @@ export const EXAMPLE_POST: TwitterPost = {
       type: 'photo',
     },
   ],
-  tags: [
-    '标签1', '标签2'
-  ],
+  tags: ['标签1', '标签2'],
 };
 
 export const EXAMPLE_USER: TwitterUser = {
@@ -101,7 +99,7 @@ export const REPLACER_MAP: Record<
     replacer: R.pipe(
       // @ts-ignore
       R.path(['post', 'tags']),
-      R.join(',')
+      R.join(','),
     ),
-  }
+  },
 };

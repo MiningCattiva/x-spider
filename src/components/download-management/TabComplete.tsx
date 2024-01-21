@@ -5,6 +5,7 @@ import { DownloadList } from './DownloadList';
 export const TabComplete: React.FC = () => {
   return (
     <DownloadList
+      batchActions={['deleteAll']}
       filter={(t) => ['complete'].includes(t.status)}
     />
   );

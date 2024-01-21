@@ -7,7 +7,7 @@ class Aria2 {
   get ready() {
     return this.#ready;
   }
-  #secret = crypto.randomUUID()
+  #secret = crypto.randomUUID();
   #port = 6801;
   #ws?: WebSocket;
   #command?: Command;
@@ -48,7 +48,7 @@ class Aria2 {
   #onSettingsStoreChanged(state: SettingsStore) {
     this.invoke('aria2.changeGlobalOption', {
       'all-proxy': state.proxy.enable ? state.proxy.url : '',
-    })
+    });
   }
 
   #onStdout(message: string) {
@@ -128,7 +128,10 @@ class Aria2 {
           jsonrpc: '2.0',
           id: id.toString(),
           method,
-          params: method === 'system.multicall' ? args : [`token:${this.#secret}`, ...args],
+          params:
+            method === 'system.multicall'
+              ? args
+              : [`token:${this.#secret}`, ...args],
         }),
       );
 
@@ -147,21 +150,26 @@ class Aria2 {
     });
   }
 
-  async batchInvoke(payload: {methodName: string, params: any[]}[]): Promise<any[]> {
+  async batchInvoke(
+    payload: { methodName: string; params: any[] }[],
+  ): Promise<any[]> {
     const token = `token:${this.#secret}`;
     return this.invoke(
       'system.multicall',
       payload.map((item) => ({
         methodName: item.methodName,
-        params: [
-          token,
-          ...item.params,
-        ]
-      }))
-    )
+        params: [token, ...item.params],
+      })),
+    );
   }
 }
 
 export const aria2 = new Aria2();
 
-export type Aria2Status = 'waiting' | 'active' | 'paused' | 'error' | 'complete' | 'removed';
+export type Aria2Status =
+  | 'waiting'
+  | 'active'
+  | 'paused'
+  | 'error'
+  | 'complete'
+  | 'removed';

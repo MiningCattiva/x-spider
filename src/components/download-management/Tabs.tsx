@@ -39,7 +39,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs }) => {
     <div className="h-full flex flex-col">
       <ul role="tablist" className="flex space-x-6">
         {tabs.map((tab) => (
-          <li key={tab.name} className='w-'>
+          <li key={tab.name} className="w-">
             <div className="relative">
               {tab.name === currentTab && (
                 <div className="absolute w-full h-2 rounded-full bg-ant-color-primary left-0 bottom-0" />

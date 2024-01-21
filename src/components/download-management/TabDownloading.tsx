@@ -16,20 +16,19 @@ export const TabDownloading: React.FC = () => {
   );
 
   return (
-    <>
-      <DownloadList
-        onInScreenTasksChanged={onInScreenTasksChanged}
-        filter={(t) => ['waiting', 'active', 'paused'].includes(t.status)}
-        sort={(a, b) => {
-          const transformStatus = R.cond([
-            [R.equals('active'), R.always(0)],
-            [R.equals('paused'), R.always(1)],
-            [R.equals('waiting'), R.always(2)],
-            [R.T, R.always(3)],
-          ]);
-          return transformStatus(a.status) - transformStatus(b.status);
-        }}
-      />
-    </>
+    <DownloadList
+      batchActions={['pauseAll', 'unpauseAll', 'deleteAll']}
+      onInScreenTasksChanged={onInScreenTasksChanged}
+      filter={(t) => ['waiting', 'active', 'paused'].includes(t.status)}
+      sort={(a, b) => {
+        const transformStatus = R.cond([
+          [R.equals('active'), R.always(0)],
+          [R.equals('paused'), R.always(1)],
+          [R.equals('waiting'), R.always(2)],
+          [R.T, R.always(3)],
+        ]);
+        return transformStatus(a.status) - transformStatus(b.status);
+      }}
+    />
   );
 };

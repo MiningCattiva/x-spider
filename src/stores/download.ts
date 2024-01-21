@@ -30,6 +30,15 @@ async function mergeAriaStatusToDownloadTask(
 
 const creationTaskAbortControllerMap = new Map<string, AbortController>();
 
+export interface CreateDownloadTaskParams {
+  post: TwitterPost;
+  user: TwitterUser;
+  media: TwitterMedia;
+  fileName: string;
+  dir: string;
+  downloadUrl: string;
+}
+
 export interface DownloadStore {
   currentTab: string;
   setCurrentTab: (tab: string) => void;
@@ -37,19 +46,19 @@ export interface DownloadStore {
   downloadTasks: DownloadTask[];
   autoSyncTaskIds: string[];
   setAutoSyncTaskIds: (ids: string[]) => void;
-  createDownloadTask: (
-    post: TwitterPost,
-    user: TwitterUser,
-    media: TwitterMedia,
-    fileName: string,
-    dir: string,
+  createDownloadTask: (params: CreateDownloadTaskParams) => Promise<void>;
+  batchCreateDownloadTask: (
+    paramsList: CreateDownloadTaskParams[],
   ) => Promise<void>;
   pauseDownloadTask: (gid: string) => Promise<void>;
   pauseAllDownloadTask: () => Promise<void>;
   unpauseDownloadTask: (gid: string) => Promise<void>;
   unpauseAllDownloadTask: () => Promise<void>;
   removeDownloadTask: (gid: string) => Promise<void>;
+  batchRemoveDownloadTasks: (gids: string[]) => Promise<void>;
   syncDownloadTaskStatus: (gid: string) => Promise<void>;
+  redownloadTask: (gid: string) => Promise<void>;
+  batchRedownloadTask: (gid: string[]) => Promise<void>;
 
   creationTasks: CreationTask[];
   createCreationTask: (userId: string, filter: DownloadFilter) => void;
@@ -65,14 +74,21 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
   setAutoSyncTaskIds: (ids) => set({ autoSyncTaskIds: ids }),
 
   downloadTasks: [],
-  createDownloadTask: async (post, user, media, fileName, dir) => {
-    const gid = await aria2.invoke('aria2.addUri', [media.url], {
+  createDownloadTask: async ({
+    post,
+    user,
+    media,
+    fileName,
+    dir,
+    downloadUrl,
+  }) => {
+    const gid = await aria2.invoke('aria2.addUri', [downloadUrl], {
       dir: dir,
       out: fileName,
     });
     const status = await aria2.invoke('aria2.tellStatus', gid);
     const task: DownloadTask = {
-      gid,
+      gid: status.gid,
       status: status.status,
       completeSize: Number(status.completedLength),
       totalSize: Number(status.totalLength),
@@ -83,9 +99,47 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
       dir,
       user,
       updatedAt: Date.now(),
+      downloadUrl,
     };
     set({
       downloadTasks: get().downloadTasks.concat(task),
+    });
+  },
+  batchCreateDownloadTask: async (paramsList) => {
+    const gids = (
+      await aria2.batchInvoke(
+        paramsList.map((p) => ({
+          methodName: 'aria2.addUri',
+          params: [[p.media.url]],
+        })),
+      )
+    ).flat();
+    const statusList = await aria2.batchInvoke(
+      gids.map((gid) => ({
+        methodName: 'aria2.tellStatus',
+        params: [gid],
+      })),
+    );
+
+    const tasks: DownloadTask[] = await Promise.all(
+      statusList.map<Promise<DownloadTask>>(async (status, index) => ({
+        gid: status.gid,
+        status: status.status,
+        completeSize: Number(status.completedLength),
+        totalSize: Number(status.totalLength),
+        fileName: await path.basename(status.files[0].path),
+        media: paramsList[index].media,
+        post: paramsList[index].post,
+        error: status.errorMessage,
+        dir: status.dir,
+        user: paramsList[index].user,
+        updatedAt: Date.now(),
+        downloadUrl: paramsList[index].downloadUrl,
+      })),
+    );
+
+    set({
+      downloadTasks: get().downloadTasks.concat(...tasks),
     });
   },
   pauseDownloadTask: async (gid) => {
@@ -101,16 +155,66 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
     await aria2.invoke('aria2.unpauseAll');
   },
   removeDownloadTask: async (gid) => {
-    try {
-      await aria2.invoke('aria2.remove', gid);
-    } catch (err) {
+    aria2.invoke('aria2.remove', gid).catch((err) => {
       console.error(err);
-    }
+    });
     set({
       downloadTasks: R.filter((v: DownloadTask) => v.gid !== gid)(
         get().downloadTasks,
       ),
     });
+  },
+  batchRemoveDownloadTasks: async (gids) => {
+    aria2
+      .batchInvoke(
+        gids.map((gid) => ({
+          methodName: 'aria2.remove',
+          params: [gid],
+        })),
+      )
+      .catch((err) => {
+        console.error(err);
+      });
+    set({
+      downloadTasks: R.filter((v: DownloadTask) => !gids.includes(v.gid))(
+        get().downloadTasks,
+      ),
+    });
+  },
+  redownloadTask: async (gid) => {
+    const store = get();
+    const oldTask = store.downloadTasks.find((t) => t.gid === gid);
+    if (!oldTask) {
+      throw new Error(`Cannot find task ${gid}`);
+    }
+    await store.removeDownloadTask(oldTask.gid);
+    await store.createDownloadTask({
+      post: oldTask.post,
+      user: oldTask.user,
+      media: oldTask.media,
+      fileName: oldTask.fileName,
+      dir: oldTask.dir,
+      downloadUrl: oldTask.downloadUrl,
+    });
+  },
+  batchRedownloadTask: async (gids) => {
+    const store = get();
+    const oldTasks = store.downloadTasks.filter((t) => gids.includes(t.gid));
+    if (oldTasks.length === 0) {
+      throw new Error('No task gid matched');
+    }
+
+    await store.batchRemoveDownloadTasks(gids);
+    await store.batchCreateDownloadTask(
+      oldTasks.map((task) => ({
+        dir: task.dir,
+        downloadUrl: task.downloadUrl,
+        fileName: task.fileName,
+        media: task.media,
+        post: task.post,
+        user: task.user,
+      })),
+    );
   },
   syncDownloadTaskStatus: async (gid) => {
     const tasks = get().downloadTasks;
@@ -215,7 +319,7 @@ async function scheduleCreationTasks() {
     await runCreationTask(task, abortController.signal);
   } catch (err: any) {
     console.error(err);
-    message.error(err || err.message);
+    message.error('创建任务失败');
   }
   removeCreationTask(task.id);
   requestIdleCallback(scheduleCreationTasks);
