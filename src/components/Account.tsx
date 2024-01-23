@@ -153,18 +153,36 @@ export const Account: React.FC = () => {
           </FormItem>
         </Form>
         <p className="mt-2">
-          <a
-            href="https://twitter.com"
-            target="_blank"
-            rel="noreferrer"
-            className="text-ant-color-link flex items-center"
+          <button
+            onClick={() => {
+              Modal.confirm({
+                title: '寻找 CookieString 的方法',
+                icon: null,
+                content: (
+                  <>
+                    <p>1. 打开推特并登录。</p>
+                    <p>2. 按【F12】打开开发者工具。</p>
+                    <p>3. 找到【应用程序（Applications）】选项卡。</p>
+                    <p>
+                      4.
+                      在左侧列表中找到【Cookie】，展开并选中【https://twitter.com】。
+                    </p>
+                    <p>
+                      5.
+                      在右侧找到名称为【auth_token】和【ct0】的项目，复制相应值填写表单即可。
+                    </p>
+                  </>
+                ),
+              });
+            }}
+            className="text-ant-color-link flex items-center bg-transparent"
           >
             <QuestionCircleOutlined
               className="transform translate-y-[0.6px]"
               aria-hidden
             />
             <span className="ml-1">寻找 CookieString 的方法</span>
-          </a>
+          </button>
         </p>
         {modalLoading && (
           <span className="sr-only" role="status">
