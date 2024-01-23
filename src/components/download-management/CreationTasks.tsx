@@ -31,7 +31,7 @@ export const CreationTasks: React.FC = () => {
             </a>
             <div className="flex items-center space-x-2 shrink-0">
               <span className="space-x-2">
-                <span>已发asdasdasdsad送：{t.completeCount}</span>
+                <span>已发送：{t.completeCount}</span>
                 {t.skipCount > 0 && <span>已跳过：{t.skipCount}</span>}
               </span>
               <Button
