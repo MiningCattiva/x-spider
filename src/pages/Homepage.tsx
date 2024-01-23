@@ -160,7 +160,7 @@ export const Homepage: React.FC = () => {
         </div>
       </div>
       <section
-        className="relative grow mt-4 pb-4 overflow-hidden h-full"
+        className="relative grow mt-4 pb-4 overflow-hidden h-full min-h-[50vh]"
         aria-label="内容预览"
       >
         <PostListGridView />

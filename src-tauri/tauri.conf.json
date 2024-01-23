@@ -56,7 +56,9 @@
     },
     "bundle": {
       "active": true,
-      "targets": "all",
+      "targets": [
+        "nsis"
+      ],
       "identifier": "x-spider",
       "icon": [
         "icons/32x32.png",
@@ -78,7 +80,7 @@
         "resizable": true,
         "title": "X-Spider",
         "width": 1280,
-        "height": 720,
+        "height": 920,
         "minWidth": 800,
         "minHeight": 600,
         "decorations": true

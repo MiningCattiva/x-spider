@@ -1,4 +1,4 @@
-import { path } from '@tauri-apps/api';
+import { fs, path } from '@tauri-apps/api';
 import { message } from 'antd';
 import { nanoid } from 'nanoid';
 import * as R from 'ramda';
@@ -14,6 +14,7 @@ import { getTwitterPosts } from '../twitter/api';
 import { useSettingsStore } from './settings';
 import { getDownloadUrl } from '../twitter/utils';
 import { buildFileName } from '../utils/file-name-template';
+import { asyncMap } from '../utils/async';
 
 async function mergeAriaStatusToDownloadTask(
   ariaStatus: any,
@@ -294,6 +295,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
           filter,
           status: 'waiting',
           completeCount: 0,
+          skipCount: 0,
         },
       ],
     });
@@ -353,6 +355,7 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
 
   let cursor: string | undefined;
   let completeCount = 0;
+  let skipCount = 0;
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const { twitterPosts, cursor: nextCursor } = await getTwitterPosts(
@@ -370,32 +373,38 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
       return;
     }
 
-    const params: CreateDownloadTaskParams[] = posts
-      .map((post: TwitterPost) => {
+    const params: CreateDownloadTaskParams[] = (
+      await asyncMap(async (post: TwitterPost) => {
         // @ts-ignore
-        const params: CreateDownloadTaskParams[] = post.medias
-          .filter(filterMedias)
-          .map((m: TwitterMedia) => {
+        const params: CreateDownloadTaskParams[] = (
+          await asyncMap(async (m: TwitterMedia) => {
             const downloadUrl = getDownloadUrl(m);
             if (!downloadUrl) return undefined;
-            return {
-              dir: settings.download.savePath,
+            const fileName = buildFileName(settings.download.fileNameTemplate, {
+              media: m,
+              post,
+              user: task.user,
               downloadUrl,
-              fileName: buildFileName(settings.download.fileNameTemplate, {
-                media: m,
-                post,
-                user: task.user,
-                downloadUrl,
-              }),
+            });
+            const dir = settings.download.savePath;
+            const filePath = await path.join(dir, fileName);
+            if (settings.download.sameFileSkip && (await fs.exists(filePath))) {
+              skipCount++;
+              return undefined;
+            }
+            return {
+              dir,
+              downloadUrl,
+              fileName,
               media: m,
               post,
               user: task.user,
             } satisfies CreateDownloadTaskParams;
-          })
-          .filter((m) => !!m);
+          }, post.medias.filter(filterMedias))
+        ).filter((m) => !!m);
         return params;
-      })
-      .flat();
+      }, posts)
+    ).flat();
 
     if (!params.length) continue;
 
@@ -404,6 +413,7 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
     updateCreationTask({
       ...task,
       completeCount,
+      skipCount,
     });
 
     if (abortSignal.aborted) return;
