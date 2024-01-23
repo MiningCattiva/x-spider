@@ -33,6 +33,14 @@ export const Settings: React.FC = () => {
         >
           <FileNameTemplateInput />
         </Item>
+        <Item
+          settingKey="sameFileSkip"
+          label="跳过相同文件"
+          valuePropName="checked"
+          description="存在同名文件时，是否跳过下载"
+        >
+          <Switch />
+        </Item>
       </Section>
       <Section title="代理" name="proxy" titleIcon={<GlobalOutlined />}>
         <Item label="启用代理" settingKey="enable" valuePropName="checked">

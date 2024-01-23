@@ -7,4 +7,5 @@ export interface CreationTask {
   filter: DownloadFilter;
   status: 'waiting' | 'active';
   completeCount: number;
+  skipCount: number;
 }
