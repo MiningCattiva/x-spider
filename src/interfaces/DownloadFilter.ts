@@ -1,4 +1,3 @@
 export interface DownloadFilter {
-  startDate: number;
-  endDate: number;
+  dateRange?: [start: number, end: number];
 }

@@ -118,6 +118,7 @@ export async function getUser(screenName: string): Promise<TwitterUser> {
 export async function getTwitterPosts(
   userId: string,
   cursor?: string,
+  count = 20,
 ): Promise<{
   twitterPosts: TwitterPost[];
   cursor: string | null;
@@ -154,7 +155,7 @@ export async function getTwitterPosts(
       }),
       variables: JSON.stringify({
         userId,
-        count: 20,
+        count,
         cursor,
         includePromotedContent: false,
         withClientEventToken: false,

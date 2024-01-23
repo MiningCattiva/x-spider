@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { TwitterUser } from '../interfaces/TwitterUser';
 import { getUser, getTwitterPosts } from '../twitter/api';
 import { TwitterPost } from '../interfaces/TwitterPost';
+import { DownloadFilter } from '../interfaces/DownloadFilter';
 
 export interface PostListRequest {
   list: TwitterPost[];
@@ -17,6 +18,8 @@ export interface UserInfoRequest {
 export interface HomepageStore {
   keyword: string;
   setKeyword: (kw: string) => void;
+  filter: DownloadFilter;
+  setFilter: (filter: DownloadFilter) => void;
 
   userInfo: UserInfoRequest;
   loadUser: (
@@ -34,6 +37,8 @@ export interface HomepageStore {
 export const useHomepageStore = create<HomepageStore>((set, get) => ({
   keyword: '',
   setKeyword: (kw: string) => set({ keyword: kw }),
+  filter: {},
+  setFilter: (filter) => set({ filter }),
 
   userInfo: {
     loading: false,

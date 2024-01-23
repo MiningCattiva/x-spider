@@ -3,9 +3,7 @@ import { clipboard } from '@tauri-apps/api';
 import { Button, Input, message } from 'antd';
 import React from 'react';
 import {
-  EXAMPLE_MEDIA,
-  EXAMPLE_POST,
-  EXAMPLE_USER,
+  EXAMPLE_FILE_NAME_TEMPLATE_DATA,
   REPLACER_MAP,
 } from '../../constants/file-name-template';
 import { buildFileName } from '../../utils/file-name-template';
@@ -56,11 +54,7 @@ export const FileNameTemplateInput: React.FC<FileNameTemplateInputProps> = ({
       <section className="text-gray-600 text-xs mt-4">
         <strong>输出示例：</strong>
         <span>
-          {buildFileName(value || '', {
-            media: EXAMPLE_MEDIA,
-            post: EXAMPLE_POST,
-            user: EXAMPLE_USER,
-          })}
+          {buildFileName(value || '', EXAMPLE_FILE_NAME_TEMPLATE_DATA)}
         </span>
       </section>
     </div>

@@ -43,6 +43,13 @@ export const EXAMPLE_USER: TwitterUser = {
 
 export const EXAMPLE_MEDIA: TwitterMedia = EXAMPLE_POST.medias[0];
 
+export const EXAMPLE_FILE_NAME_TEMPLATE_DATA: FileNameTemplateData = {
+  media: EXAMPLE_MEDIA,
+  post: EXAMPLE_POST,
+  user: EXAMPLE_USER,
+  downloadUrl: EXAMPLE_MEDIA.url,
+};
+
 export const REPLACER_MAP: Record<
   string,
   {
@@ -88,9 +95,11 @@ export const REPLACER_MAP: Record<
     desc: '扩展名',
     replacer: R.pipe(
       // @ts-ignore
-      R.path(['media', 'url']),
+      R.prop('downloadUrl'),
       R.split('.'),
       R.last,
+      R.split('?'),
+      R.head,
       (s) => `.${s}`,
     ),
   },

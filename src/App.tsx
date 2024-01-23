@@ -9,6 +9,7 @@ import { settingsLoadedEvent } from './events/settings-loaded';
 import { appStateLoadedEvent } from './events/app-state-loaded';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useTaskNotifications } from './hooks/useTaskNotifications';
+import zhCN from 'antd/locale/zh_CN';
 
 export const App: React.FC = () => {
   const settingsLoaded = useStoreLoaded(settingsLoadedEvent);
@@ -19,7 +20,11 @@ export const App: React.FC = () => {
   useTaskNotifications();
 
   return (
-    <ConfigProvider theme={ANTD_THEME} autoInsertSpaceInButton={false}>
+    <ConfigProvider
+      theme={ANTD_THEME}
+      autoInsertSpaceInButton={false}
+      locale={zhCN}
+    >
       <div className="css-var-r0 select-none text-gray-800 relative w-screen h-screen flex flex-col overflow-hidden">
         {loading && (
           <div className="w-screen h-screen flex flex-col items-center justify-center">
