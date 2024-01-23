@@ -6,4 +6,5 @@ export interface FileNameTemplateData {
   post: TwitterPost;
   user: TwitterUser;
   media: TwitterMedia;
+  downloadUrl: string;
 }

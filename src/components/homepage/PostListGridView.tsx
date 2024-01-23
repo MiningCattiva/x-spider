@@ -13,6 +13,7 @@ import { buildFileName } from '../../utils/file-name-template';
 import { useSettings } from '../../hooks/useSettings';
 import { useDownloadStore } from '../../stores/download';
 import { message } from 'antd';
+import { getDownloadUrl } from '../../twitter/utils';
 
 export const PostListGridView: React.FC = () => {
   const { userInfo, loadMorePostList, postList } = useHomepageStore(
@@ -70,7 +71,7 @@ export const PostListGridView: React.FC = () => {
           列表加载完成
         </div>
       )}
-      <ul className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-2">
+      <ul className="grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-2">
         {mediaList.map((media) => {
           const actionOpen: GridViewItemAction = {
             name: '打开推文',
@@ -83,19 +84,25 @@ export const PostListGridView: React.FC = () => {
               const post = postList.list.find(
                 (post) => post.id === media.postId,
               )!;
-              const fileName = buildFileName(fileNameTemplate, {
-                media,
-                post,
-                user: userInfo.data!,
-              });
               try {
+                const downloadUrl = getDownloadUrl(media);
+                if (!downloadUrl) {
+                  message.error('无法获取下载链接');
+                  return;
+                }
+                const fileName = buildFileName(fileNameTemplate, {
+                  media,
+                  post,
+                  user: userInfo.data!,
+                  downloadUrl,
+                });
                 await createDownloadTask({
                   post,
                   user: userInfo.data!,
                   media,
                   fileName,
                   dir: savePath,
-                  downloadUrl: media.url,
+                  downloadUrl,
                 });
                 message.success('已添加到下载队列');
               } catch (err: any) {
@@ -108,7 +115,34 @@ export const PostListGridView: React.FC = () => {
           const actionDownloadVideo: GridViewItemAction = {
             name: '下载视频',
             async onClick() {
-              // TODO
+              const post = postList.list.find(
+                (post) => post.id === media.postId,
+              )!;
+              try {
+                const downloadUrl = getDownloadUrl(media);
+                if (!downloadUrl) {
+                  message.error('无法获取下载链接');
+                  return;
+                }
+                const fileName = buildFileName(fileNameTemplate, {
+                  media,
+                  post,
+                  user: userInfo.data!,
+                  downloadUrl,
+                });
+                await createDownloadTask({
+                  post,
+                  user: userInfo.data!,
+                  media,
+                  fileName,
+                  dir: savePath,
+                  downloadUrl,
+                });
+                message.success('已添加到下载队列');
+              } catch (err: any) {
+                console.error(err);
+                message.error('创建下载任务失败');
+              }
             },
           };
 
@@ -121,7 +155,7 @@ export const PostListGridView: React.FC = () => {
               }
               tabIndex={0}
               key={media.id}
-              className="relative h-[15rem] overflow-hidden bg-white group"
+              className="relative h-[12rem] overflow-hidden bg-white group"
             >
               <div className="h-full">
                 <img

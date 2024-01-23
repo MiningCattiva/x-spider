@@ -10,10 +10,15 @@ import { TwitterMedia } from '../interfaces/TwitterMedia';
 import { TwitterPost } from '../interfaces/TwitterPost';
 import { TwitterUser } from '../interfaces/TwitterUser';
 import { aria2 } from '../utils/aria2';
+import { getTwitterPosts } from '../twitter/api';
+import { useSettingsStore } from './settings';
+import { getDownloadUrl } from '../twitter/utils';
+import { buildFileName } from '../utils/file-name-template';
 
 async function mergeAriaStatusToDownloadTask(
   ariaStatus: any,
   oldTask: DownloadTask,
+  now = Date.now(),
 ): Promise<DownloadTask> {
   return {
     ...oldTask,
@@ -24,7 +29,7 @@ async function mergeAriaStatusToDownloadTask(
     fileName: await path.basename(ariaStatus.files[0].path),
     error: ariaStatus.errorMessage,
     dir: ariaStatus.dir,
-    updatedAt: Date.now(),
+    updatedAt: now,
   };
 }
 
@@ -57,11 +62,13 @@ export interface DownloadStore {
   removeDownloadTask: (gid: string) => Promise<void>;
   batchRemoveDownloadTasks: (gids: string[]) => Promise<void>;
   syncDownloadTaskStatus: (gid: string) => Promise<void>;
+  updateDownloadTask: (task: DownloadTask, now?: number) => void;
+  batchUpdateDownloadTasks: (tasks: DownloadTask[]) => void;
   redownloadTask: (gid: string) => Promise<void>;
   batchRedownloadTask: (gid: string[]) => Promise<void>;
 
   creationTasks: CreationTask[];
-  createCreationTask: (userId: string, filter: DownloadFilter) => void;
+  createCreationTask: (user: TwitterUser, filter: DownloadFilter) => void;
   removeCreationTask: (id: string) => void;
   updateCreationTask: (task: CreationTask) => void;
 }
@@ -86,16 +93,15 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
       dir: dir,
       out: fileName,
     });
-    const status = await aria2.invoke('aria2.tellStatus', gid);
     const task: DownloadTask = {
-      gid: status.gid,
-      status: status.status,
-      completeSize: Number(status.completedLength),
-      totalSize: Number(status.totalLength),
-      fileName: await path.basename(status.files[0].path),
+      gid,
+      status: 'waiting',
+      completeSize: 0,
+      totalSize: Infinity,
+      fileName,
       media,
       post,
-      error: status.errorMessage,
+      error: '',
       dir,
       user,
       updatedAt: Date.now(),
@@ -105,12 +111,55 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
       downloadTasks: get().downloadTasks.concat(task),
     });
   },
+  updateDownloadTask: (task, now = Date.now()) => {
+    const oldTasks = get().downloadTasks;
+    const oldTaskIndex = get().downloadTasks.findIndex(
+      (t) => t.gid === task.gid,
+    );
+    if (oldTaskIndex === -1) return;
+    const oldTask = oldTasks[oldTaskIndex];
+    if (oldTask.updatedAt > now) return;
+    const newTasks = R.adjust(oldTaskIndex, R.always(task))(oldTasks);
+    set({
+      downloadTasks: newTasks,
+    });
+  },
+  batchUpdateDownloadTasks: (tasks) => {
+    const { downloadTasks: oldTasks } = get();
+    const newTaskMap = R.pipe<
+      [DownloadTask[]],
+      [DownloadTask['gid'], DownloadTask][],
+      Record<string, DownloadTask>
+    >(
+      R.map((t: DownloadTask) => [t.gid, t]),
+      R.fromPairs,
+    )(tasks);
+
+    const newTasks = oldTasks.map((oldTask) => {
+      const newTask = newTaskMap[oldTask.gid];
+      if (!newTask) return oldTask;
+      if (newTask.updatedAt < oldTask.updatedAt) {
+        return oldTask;
+      }
+      return newTask;
+    });
+
+    set({
+      downloadTasks: newTasks,
+    });
+  },
   batchCreateDownloadTask: async (paramsList) => {
     const gids = (
       await aria2.batchInvoke(
         paramsList.map((p) => ({
           methodName: 'aria2.addUri',
-          params: [[p.media.url]],
+          params: [
+            [p.media.url],
+            {
+              dir: p.dir,
+              out: p.fileName,
+            },
+          ],
         })),
       )
     ).flat();
@@ -122,7 +171,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
     );
 
     const tasks: DownloadTask[] = await Promise.all(
-      statusList.map<Promise<DownloadTask>>(async (status, index) => ({
+      statusList.map<Promise<DownloadTask>>(async ([status], index) => ({
         gid: status.gid,
         status: status.status,
         completeSize: Number(status.completedLength),
@@ -217,21 +266,22 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
     );
   },
   syncDownloadTaskStatus: async (gid) => {
-    const tasks = get().downloadTasks;
-    const index = tasks.findIndex((v) => v.gid === gid);
+    const { downloadTasks, updateDownloadTask } = get();
+    const index = downloadTasks.findIndex((v) => v.gid === gid);
     if (index === -1) {
       return;
     }
+    const now = Date.now();
     const status = await aria2.invoke('aria2.tellStatus', gid);
-    const newTask = await mergeAriaStatusToDownloadTask(status, tasks[index]);
-    const newTasks = R.adjust(index, R.always(newTask))(tasks);
-    set({
-      downloadTasks: newTasks,
-    });
+    const newTask = await mergeAriaStatusToDownloadTask(
+      status,
+      downloadTasks[index],
+    );
+    updateDownloadTask(newTask, now);
   },
 
   creationTasks: [],
-  createCreationTask: (userId, filter) => {
+  createCreationTask: (user, filter) => {
     const id = nanoid();
     const abortController = new AbortController();
     creationTaskAbortControllerMap.set(id, abortController);
@@ -240,9 +290,10 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
         ...get().creationTasks,
         {
           id,
-          userId,
+          user,
           filter,
           status: 'waiting',
+          completeCount: 0,
         },
       ],
     });
@@ -255,7 +306,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
     abortController.abort();
     creationTaskAbortControllerMap.delete(id);
     set({
-      creationTasks: get().creationTasks.filter((v) => v.id === id),
+      creationTasks: get().creationTasks.filter((v) => v.id !== id),
     });
   },
   updateCreationTask: (task) => {
@@ -263,7 +314,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
       // @ts-ignore
       creationTasks: R.map(
         R.ifElse(R.propEq(task.id, 'id'), R.always(task), R.identity),
-      ),
+      )(get().creationTasks),
     });
   },
 }));
@@ -280,7 +331,85 @@ aria2.onDownloadStart.listen(onAria2StatusChanged);
 aria2.onDownloadStop.listen(onAria2StatusChanged);
 
 async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
-  const { createDownloadTask } = useDownloadStore.getState();
+  const { batchCreateDownloadTask, updateCreationTask } =
+    useDownloadStore.getState();
+  const { filter } = task;
+  const settings = useSettingsStore.getState();
+  const filterPosts = R.filter<TwitterPost>(
+    R.allPass([
+      // Filter dateRange
+      (post) => {
+        if (!filter.dateRange) return true;
+        return (
+          filter.dateRange[0] <= post.createdAt &&
+          filter.dateRange[1] >= post.createdAt
+        );
+      },
+    ]),
+  );
+
+  // Reserve for future use
+  const filterMedias = R.filter<TwitterMedia, TwitterMedia>(R.allPass([]));
+
+  let cursor: string | undefined;
+  let completeCount = 0;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { twitterPosts, cursor: nextCursor } = await getTwitterPosts(
+      task.user.id,
+      cursor,
+    );
+    cursor = nextCursor || undefined;
+    if (abortSignal.aborted) {
+      return;
+    }
+
+    const posts = filterPosts(twitterPosts);
+
+    if (posts.length === 0) {
+      return;
+    }
+
+    const params: CreateDownloadTaskParams[] = posts
+      .map((post: TwitterPost) => {
+        // @ts-ignore
+        const params: CreateDownloadTaskParams[] = post.medias
+          .filter(filterMedias)
+          .map((m: TwitterMedia) => {
+            const downloadUrl = getDownloadUrl(m);
+            if (!downloadUrl) return undefined;
+            return {
+              dir: settings.download.savePath,
+              downloadUrl,
+              fileName: buildFileName(settings.download.fileNameTemplate, {
+                media: m,
+                post,
+                user: task.user,
+                downloadUrl,
+              }),
+              media: m,
+              post,
+              user: task.user,
+            } satisfies CreateDownloadTaskParams;
+          })
+          .filter((m) => !!m);
+        return params;
+      })
+      .flat();
+
+    if (!params.length) continue;
+
+    await batchCreateDownloadTask(params);
+    completeCount += params.length;
+    updateCreationTask({
+      ...task,
+      completeCount,
+    });
+
+    if (abortSignal.aborted) return;
+
+    if (!cursor) return;
+  }
 }
 
 // Schedules creation tasks
@@ -336,7 +465,7 @@ async function scheduleAutoSyncTasks() {
     return;
   }
 
-  const startTime = Date.now();
+  const now = Date.now();
 
   const results = await aria2.batchInvoke(
     ids.map((id) => ({
@@ -350,18 +479,22 @@ async function scheduleAutoSyncTasks() {
     R.map<any, [string, any]>((r: any) => [r.gid, r]),
     R.fromPairs,
   )(results);
-  const { downloadTasks } = useDownloadStore.getState();
+  const { downloadTasks, batchUpdateDownloadTasks } =
+    useDownloadStore.getState();
   const newTasks = await Promise.all(
     downloadTasks.map<Promise<DownloadTask>>(async (oldTask) => {
       // Do not update status after someone updated it during query
-      if (oldTask.updatedAt > startTime) return oldTask;
-      return mergeAriaStatusToDownloadTask(resultMap[oldTask.gid], oldTask);
+      if (oldTask.updatedAt > now) return oldTask;
+      if (!resultMap[oldTask.gid]) return oldTask;
+      return mergeAriaStatusToDownloadTask(
+        resultMap[oldTask.gid],
+        oldTask,
+        now,
+      );
     }),
   );
 
-  useDownloadStore.setState({
-    downloadTasks: newTasks,
-  });
+  batchUpdateDownloadTasks(newTasks);
 
   setTimeout(scheduleAutoSyncTasks, INTERVAL);
 }
