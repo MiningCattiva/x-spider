@@ -226,7 +226,17 @@ export async function getTwitterPosts(
 
   const pathToTwitterPostItems = R.pipe(
     pathToModuleItems,
-    R.map(R.path<any>(['item', 'itemContent', 'tweet_results', 'result'])),
+    R.map(
+      R.pipe(
+        R.path<any>(['item', 'itemContent', 'tweet_results', 'result']),
+        // @ts-ignore
+        R.ifElse(
+          R.propEq('TweetWithVisibilityResults', '__typename'),
+          R.prop('tweet'),
+          R.identity,
+        ),
+      ),
+    ),
   );
 
   const mapTwitterMedias = R.pipe<
