@@ -2,7 +2,10 @@ import { TwitterMedia } from '../interfaces/TwitterMedia';
 
 export function getDownloadUrl(media: TwitterMedia): string | undefined {
   if (media.type === 'photo') {
-    return media.url;
+    if (!media.url) return undefined;
+    const url = new URL(media.url);
+    url.searchParams.set('name', 'large');
+    return url.href;
   }
 
   if (media.type === 'video') {
