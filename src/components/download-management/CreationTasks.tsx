@@ -19,14 +19,18 @@ export const CreationTasks: React.FC = () => {
         {creationTasks.map((t) => (
           <li className="flex items-center justify-between" key={t.id}>
             <a
-              href={buildUserUrl(t.user.screenName)}
+              href={
+                t.user?.screenName
+                  ? buildUserUrl(t.user.screenName)
+                  : 'javascript:void(0);'
+              }
               target="_blank"
               rel="noreferrer"
               className="flex items-center space-x-1 overflow-hidden pr-4"
             >
               <Avatar size={20} src={t.user.avatar} className="shrink-0" />
               <span className="whitespace-nowrap overflow-hidden text-ellipsis">
-                {`${t.user.name} @${t.user.screenName}`}
+                {`${t.user?.name || '未知用户'} ${t.user?.screenName ? `@${t.user.screenName}` : ''}`}
               </span>
             </a>
             <div className="flex items-center space-x-2 shrink-0">

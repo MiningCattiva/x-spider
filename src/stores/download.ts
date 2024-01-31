@@ -155,7 +155,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
         paramsList.map((p) => ({
           methodName: 'aria2.addUri',
           params: [
-            [p.media.url],
+            [p.downloadUrl],
             {
               dir: p.dir,
               out: p.fileName,
@@ -333,15 +333,21 @@ aria2.onDownloadStart.listen(onAria2StatusChanged);
 aria2.onDownloadStop.listen(onAria2StatusChanged);
 
 async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
+  const { filter, user } = task;
+
+  if (!user.id) {
+    throw new Error('task.user.id is undefined');
+  }
+
   const { batchCreateDownloadTask, updateCreationTask } =
     useDownloadStore.getState();
-  const { filter } = task;
   const settings = useSettingsStore.getState();
   const filterPosts = R.filter<TwitterPost>(
     R.allPass([
       // Filter dateRange
       (post) => {
         if (!filter.dateRange) return true;
+        if (!post?.createdAt) return false;
         return (
           filter.dateRange[0] <= post.createdAt &&
           filter.dateRange[1] >= post.createdAt
@@ -359,7 +365,7 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const { twitterPosts, cursor: nextCursor } = await getTwitterPosts(
-      task.user.id,
+      user.id,
       cursor,
     );
     cursor = nextCursor || undefined;
@@ -375,6 +381,7 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
 
     const params: CreateDownloadTaskParams[] = (
       await asyncMap(async (post: TwitterPost) => {
+        if (!post.medias) return [];
         // @ts-ignore
         const params: CreateDownloadTaskParams[] = (
           await asyncMap(async (m: TwitterMedia) => {

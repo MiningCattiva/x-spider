@@ -168,13 +168,15 @@ export async function getTwitterPosts(
   });
   ensureResponse(resp);
 
-  const toTwitterMediaBase: (v: any) => TwitterMediaBase = (v: any) => ({
-    id: v.id_str,
-    url: v.media_url_https,
-    width: v.original_info.width,
-    height: v.original_info.height,
-    twitterPostId: v.twitterPostId,
-  });
+  const toTwitterMediaBase: (v: any) => TwitterMediaBase = (v: any) => {
+    return {
+      id: v?.id_str,
+      url: v?.media_url_https,
+      width: v?.original_info?.width,
+      height: v?.original_info?.height,
+      twitterPostId: v?.twitterPostId,
+    };
+  };
 
   const toPhoto: (v: any) => TwitterMediaPhoto = (v: any) => ({
     ...toTwitterMediaBase(v),
@@ -185,13 +187,13 @@ export async function getTwitterPosts(
     ...toTwitterMediaBase(v),
     type: 'video',
     videoInfo: {
-      duration: v.video_info.duration_millis,
-      variants: v.video_info.variants.map((item: any) => ({
-        bitrate: item.bitrate,
-        contentType: item.contentType,
-        url: item.url,
+      duration: v?.video_info?.duration_millis,
+      variants: v?.video_info?.variants?.map?.((item: any) => ({
+        bitrate: item?.bitrate,
+        contentType: item?.contentType,
+        url: item?.url,
       })),
-      aspectRatio: v.aspect_ratio,
+      aspectRatio: v?.aspect_ratio,
     },
   });
 
@@ -256,32 +258,43 @@ export async function getTwitterPosts(
 
   const mapTwitterPosts = R.map<any, TwitterPost>((item) => {
     return {
-      id: item.rest_id,
-      views: Number(item.views.count),
-      createdAt: dayjs(item.legacy.created_at).unix() * 1000,
-      ownerId: item.core.user_results.result.rest_id,
-      bookmarkCount: item.legacy.bookmark_count,
-      bookmarked: item.legacy.bookmarked,
-      favoriteCount: item.legacy.favorite_count,
-      favorited: item.legacy.favorited,
-      fullText: item.legacy.full_text,
-      lang: item.legacy.lang,
-      possiblySensitive: item.legacy.possibly_sensitive,
-      replyCount: item.legacy.reply_count,
-      retweeted: item.legacy.retweeted,
-      retweetCount: item.legacy.retweet_count,
-      medias: mapTwitterMedias(item.legacy.entities.media),
+      id: item?.rest_id,
+      views: R.isNotNil(item?.views?.count)
+        ? Number(item.views.count)
+        : undefined,
+      createdAt: item?.legacy?.created_at
+        ? dayjs(item.legacy.created_at).unix() * 1000
+        : undefined,
+      ownerId: item?.core?.user_results?.result?.rest_id,
+      bookmarkCount: item?.legacy?.bookmark_count,
+      bookmarked: item?.legacy?.bookmarked,
+      favoriteCount: item?.legacy?.favorite_count,
+      favorited: item?.legacy?.favorited,
+      fullText: item?.legacy?.full_text,
+      lang: item?.legacy?.lang,
+      possiblySensitive: item?.legacy?.possibly_sensitive,
+      replyCount: item?.legacy?.reply_count,
+      retweeted: item?.legacy?.retweeted,
+      retweetCount: item?.legacy?.retweet_count,
+      medias: item?.legacy?.entities?.media
+        ? mapTwitterMedias(item.legacy.entities.media)
+        : undefined,
       tags: R.pipe<any, any[], string[]>(
         R.path<any>(['legacy', 'entities', 'hashtags']),
-        R.map(R.prop('text')),
+        R.ifElse(R.isNotNil, R.map(R.prop('text')), R.always([])),
       )(item),
     };
   });
 
-  const extractTwitterPosts = R.pipe(pathToTwitterPostItems, mapTwitterPosts);
-
+  const extractTwitterPosts = R.pipe(
+    // @ts-ignore
+    pathToTwitterPostItems,
+    mapTwitterPosts,
+    R.filter(R.propSatisfies(R.isNotNil, 'id')),
+  );
   const twitterPosts: TwitterPost[] = R.defaultTo(
     [],
+    // @ts-ignore
     extractTwitterPosts(resp.body) as TwitterPost[],
   );
 
@@ -295,14 +308,7 @@ export async function getTwitterPosts(
   const nextCursor: null | string = R.defaultTo(
     null,
     R.pipe(
-      R.path<any>([
-        'data',
-        'user',
-        'result',
-        'timeline_v2',
-        'timeline',
-        'instructions',
-      ]),
+      pathToInstructions,
       R.find(R.pathEq('TimelineAddEntries', ['type'])),
       R.prop('entries'),
       R.find(R.pathEq('Bottom', ['content', 'cursorType'])),

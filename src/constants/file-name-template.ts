@@ -5,7 +5,7 @@ import { TwitterUser } from '../interfaces/TwitterUser';
 import * as R from 'ramda';
 import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
 
-export const EXAMPLE_POST: TwitterPost = {
+export const EXAMPLE_POST: Required<TwitterPost> = {
   id: '1145141919810',
   views: 13496,
   createdAt: 1705756536000,
@@ -32,7 +32,7 @@ export const EXAMPLE_POST: TwitterPost = {
   tags: ['标签1', '标签2'],
 };
 
-export const EXAMPLE_USER: TwitterUser = {
+export const EXAMPLE_USER: Required<TwitterUser> = {
   avatar:
     'https://pbs.twimg.com/profile_images/1440258619912585220/KiYN-52Z_normal.jpg',
   name: '这是用户昵称',
@@ -41,7 +41,8 @@ export const EXAMPLE_USER: TwitterUser = {
   mediaCount: 8888,
 };
 
-export const EXAMPLE_MEDIA: TwitterMedia = EXAMPLE_POST.medias[0];
+export const EXAMPLE_MEDIA: Required<TwitterMedia> = EXAMPLE_POST
+  .medias[0] as Required<TwitterMedia>;
 
 export const EXAMPLE_FILE_NAME_TEMPLATE_DATA: FileNameTemplateData = {
   media: EXAMPLE_MEDIA,

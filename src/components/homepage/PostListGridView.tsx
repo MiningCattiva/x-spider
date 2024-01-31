@@ -73,10 +73,13 @@ export const PostListGridView: React.FC = () => {
       )}
       <ul className="grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-2">
         {mediaList.map((media) => {
-          const actionOpen: GridViewItemAction = {
-            name: '打开推文',
-            href: buildPostUrl(userInfo.data!.screenName, media.postId),
-          };
+          const actionOpen: GridViewItemAction | undefined = userInfo.data
+            ?.screenName
+            ? {
+                name: '打开推文',
+                href: buildPostUrl(userInfo.data.screenName, media.postId),
+              }
+            : undefined;
 
           const actionDownloadImage: GridViewItemAction = {
             name: '下载图片',
@@ -151,7 +154,7 @@ export const PostListGridView: React.FC = () => {
               aria-label={
                 media.type === 'photo'
                   ? '推文图片'
-                  : `推文视频，时长${dayjs.duration(media.videoInfo.duration).format('mm分ss秒')}`
+                  : `推文视频，时长${R.isNotNil(media.videoInfo?.duration) ? dayjs.duration(media.videoInfo.duration).format('mm分ss秒') : '未知'}`
               }
               tabIndex={0}
               key={media.id}
@@ -164,12 +167,13 @@ export const PostListGridView: React.FC = () => {
                   loading="lazy"
                   className="object-cover w-full h-full transform transition-transform group-hover:scale-105"
                 />
-                {media.type === 'video' && (
-                  <span className="block absolute right-2 bottom-2 text-white bg-[rgba(0,0,0,0.6)] rounded-sm px-[0.3rem] text-sm">
-                    <span className="sr-only">视频时长：</span>
-                    {dayjs.duration(media.videoInfo.duration).format('mm:ss')}
-                  </span>
-                )}
+                {media.type === 'video' &&
+                  R.isNotNil(media.videoInfo?.duration) && (
+                    <span className="block absolute right-2 bottom-2 text-white bg-[rgba(0,0,0,0.6)] rounded-sm px-[0.3rem] text-sm">
+                      <span className="sr-only">视频时长：</span>
+                      {dayjs.duration(media.videoInfo.duration).format('mm:ss')}
+                    </span>
+                  )}
                 <div className="absolute top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.7)] transition-opacity opacity-0 group-hover:opacity-100 has-[:focus]:opacity-100">
                   <GridViewItemActions
                     actions={R.cond([
@@ -182,7 +186,7 @@ export const PostListGridView: React.FC = () => {
                         R.always([actionOpen, actionDownloadVideo]),
                       ],
                       [R.T, R.always([])],
-                    ])(media.type)}
+                    ])(media.type).filter(R.isNotNil)}
                   />
                 </div>
               </div>
