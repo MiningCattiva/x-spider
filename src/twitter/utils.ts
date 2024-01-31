@@ -6,10 +6,10 @@ export function getDownloadUrl(media: TwitterMedia): string | undefined {
   }
 
   if (media.type === 'video') {
-    const variant = media.videoInfo.variants
-      .filter((i) => i.bitrate)
-      .sort((a, b) => a.bitrate - b.bitrate)
-      .pop();
+    const variant = media.videoInfo?.variants
+      ?.filter((i) => i.bitrate)
+      ?.sort((a, b) => (a.bitrate || 0) - (b.bitrate || 0))
+      ?.pop();
     return variant?.url;
   }
 }

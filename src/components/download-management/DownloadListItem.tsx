@@ -133,7 +133,11 @@ export const DownloadListItem: React.FC<DownloadListItemProps> = ({
       className="bg-white border-[1px] border-gray-300 rounded-md flex overflow-hidden"
     >
       <a
-        href={buildPostUrl(t.user.screenName, t.post.id)}
+        href={
+          t.user.screenName && t.post.id
+            ? buildPostUrl(t.user.screenName, t.post.id)
+            : 'javascript:void(0);'
+        }
         target="_blank"
         rel="noreferrer"
         className="shrink-0 overflow-hidden"
@@ -157,7 +161,11 @@ export const DownloadListItem: React.FC<DownloadListItemProps> = ({
           {t.fileName}
         </p>
         <a
-          href={buildUserUrl(t.user.screenName)}
+          href={
+            t.user.screenName
+              ? buildUserUrl(t.user.screenName)
+              : 'javascript:void(0);'
+          }
           title={`跳转到 ${t.user.name} 的主页`}
           target="_blank"
           rel="noreferrer"

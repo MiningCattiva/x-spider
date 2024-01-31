@@ -133,13 +133,17 @@ export const Homepage: React.FC = () => {
                 className="bg-white border-[1px] border-gray-300 rounded-md mt-4"
               >
                 <span className="sr-only" role="status">
-                  用户信息加载完成，当前搜索用户：{userInfo.data.name}
+                  用户信息加载完成，当前搜索用户：
+                  {userInfo.data.name || '未知用户'}
                 </span>
                 <a
                   title="跳转到主页"
-                  aria-label={`跳转到 ${userInfo.data.name} 的主页`}
                   className="flex items-center p-4 focus:outline !outline-4 !outline-cyan-200"
-                  href={buildUserUrl(userInfo.data.screenName)}
+                  href={
+                    userInfo.data.screenName
+                      ? buildUserUrl(userInfo.data.screenName)
+                      : 'javascript:void(0);'
+                  }
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -147,14 +151,16 @@ export const Homepage: React.FC = () => {
                     <Avatar src={userInfo.data.avatar} size={50} alt="头像" />
                   </div>
                   <div className="ml-2">
-                    <p>{userInfo.data.name}</p>
-                    <p className="text-ant-color-text-secondary text-sm mt-1">
-                      @{userInfo.data.screenName}
-                    </p>
+                    <p>{userInfo.data.name || '未知用户'}</p>
+                    {userInfo.data.screenName ? (
+                      <p className="text-ant-color-text-secondary text-sm mt-1">
+                        @{userInfo.data.screenName}
+                      </p>
+                    ) : undefined}
                   </div>
                 </a>
               </section>
-              <p className="mt-3">共 {userInfo.data.mediaCount} 个媒体</p>
+              <p className="mt-3">共 {userInfo.data.mediaCount || 0} 个媒体</p>
             </>
           )}
         </div>

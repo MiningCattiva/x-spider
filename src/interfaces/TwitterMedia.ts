@@ -1,8 +1,8 @@
 export interface TwitterMediaBase {
-  id: string;
-  url: string;
-  width: number;
-  height: number;
+  id?: string;
+  url?: string;
+  width?: number;
+  height?: number;
 }
 
 export interface TwitterMediaPhoto extends TwitterMediaBase {
@@ -11,14 +11,14 @@ export interface TwitterMediaPhoto extends TwitterMediaBase {
 
 export interface TwitterMediaVideo extends TwitterMediaBase {
   type: 'video';
-  videoInfo: {
+  videoInfo?: {
     duration: number;
-    variants: {
-      bitrate: number;
-      contentType: string;
-      url: string;
+    variants?: {
+      bitrate?: number;
+      contentType?: string;
+      url?: string;
     }[];
-    aspectRatio: [number, number];
+    aspectRatio?: [number, number];
   };
 }
 
