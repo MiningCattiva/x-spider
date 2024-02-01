@@ -1,3 +1,5 @@
+import MediaType from '../enums/MediaType';
+
 export interface TwitterMediaBase {
   id?: string;
   url?: string;
@@ -6,11 +8,11 @@ export interface TwitterMediaBase {
 }
 
 export interface TwitterMediaPhoto extends TwitterMediaBase {
-  type: 'photo';
+  type: MediaType.Photo;
 }
 
 export interface TwitterMediaVideo extends TwitterMediaBase {
-  type: 'video';
+  type: MediaType.Video;
   videoInfo?: {
     duration: number;
     variants?: {

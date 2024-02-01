@@ -3,6 +3,7 @@ import { TwitterUser } from '../interfaces/TwitterUser';
 import { getUser, getTwitterPosts } from '../twitter/api';
 import { TwitterPost } from '../interfaces/TwitterPost';
 import { DownloadFilter } from '../interfaces/DownloadFilter';
+import MediaType from '../enums/MediaType';
 
 export interface PostListRequest {
   list: TwitterPost[];
@@ -37,7 +38,9 @@ export interface HomepageStore {
 export const useHomepageStore = create<HomepageStore>((set, get) => ({
   keyword: '',
   setKeyword: (kw: string) => set({ keyword: kw }),
-  filter: {},
+  filter: {
+    mediaTypes: [MediaType.Photo, MediaType.Video],
+  },
   setFilter: (filter) => set({ filter }),
 
   userInfo: {

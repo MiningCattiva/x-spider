@@ -1,9 +1,10 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
 import { useHomepageStore } from '../../stores/homepage';
-import { Button, DatePicker, Form, message } from 'antd';
+import { Button, Checkbox, DatePicker, Form, message } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import { useDownloadStore } from '../../stores/download';
+import MediaType from '../../enums/MediaType';
 
 export const DownloadController: React.FC = () => {
   const { filter, setFilter, user } = useHomepageStore((s) => ({
@@ -18,6 +19,11 @@ export const DownloadController: React.FC = () => {
   const onStartDownload = async () => {
     if (!user) {
       message.error('请先加载用户');
+      return;
+    }
+
+    if (!filter.mediaTypes || filter.mediaTypes.length === 0) {
+      message.error('请至少选择一个媒体类型');
       return;
     }
 
@@ -39,10 +45,12 @@ export const DownloadController: React.FC = () => {
           dateRange: filter.dateRange
             ? filter.dateRange.map((d) => dayjs.unix(d / 1000))
             : undefined,
+          mediaTypes: filter.mediaTypes,
         }}
         onValuesChange={(_, values) => {
           setFilter({
-            dateRange: values.dateRange.map((d: Dayjs) => d.unix() * 1000),
+            dateRange: values.dateRange?.map((d: Dayjs) => d.unix() * 1000),
+            mediaTypes: values.mediaTypes,
           });
         }}
       >
@@ -75,6 +83,20 @@ export const DownloadController: React.FC = () => {
               },
             ]}
             disabledDate={(cur) => cur && cur > dayjs().endOf('day')}
+          />
+        </Form.Item>
+        <Form.Item name="mediaTypes" label="媒体类型">
+          <Checkbox.Group
+            options={[
+              {
+                label: '视频',
+                value: MediaType.Video,
+              },
+              {
+                label: '照片',
+                value: MediaType.Photo,
+              },
+            ]}
           />
         </Form.Item>
       </Form>

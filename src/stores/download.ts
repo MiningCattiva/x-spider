@@ -356,8 +356,15 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
     ]),
   );
 
-  // Reserve for future use
-  const filterMedias = R.filter<TwitterMedia, TwitterMedia>(R.allPass([]));
+  const filterMedias = R.filter<TwitterMedia, TwitterMedia>(
+    // @ts-ignore
+    R.allPass([
+      (media) => {
+        if (!filter.mediaTypes) return false;
+        return filter.mediaTypes.includes(media.type);
+      },
+    ]),
+  );
 
   let cursor: string | undefined;
   let completeCount = 0;
@@ -407,7 +414,7 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
               post,
               user: task.user,
             } satisfies CreateDownloadTaskParams;
-          }, post.medias.filter(filterMedias))
+          }, filterMedias(post.medias))
         ).filter((m) => !!m);
         return params;
       }, posts)
