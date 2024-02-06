@@ -4,6 +4,7 @@ import { TwitterPost } from '../interfaces/TwitterPost';
 import { TwitterUser } from '../interfaces/TwitterUser';
 import * as R from 'ramda';
 import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
+import MediaType from '../enums/MediaType';
 
 export const EXAMPLE_POST: Required<TwitterPost> = {
   id: '1145141919810',
@@ -26,7 +27,7 @@ export const EXAMPLE_POST: Required<TwitterPost> = {
       url: 'https://pbs.twimg.com/media/GESdifpaMAA6rth.jpg',
       width: 1323,
       height: 1136,
-      type: 'photo',
+      type: MediaType.Photo,
     },
   ],
   tags: ['标签1', '标签2'],

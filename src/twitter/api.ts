@@ -13,6 +13,7 @@ import { TwitterUser } from '../interfaces/TwitterUser';
 import { request } from '../ipc/network';
 import { useAppStateStore } from '../stores/app-state';
 import { parseCookie } from '../utils/cookie';
+import MediaType from '../enums/MediaType';
 
 async function getCookieString() {
   return useAppStateStore.getState().cookieString;
@@ -180,12 +181,12 @@ export async function getTwitterPosts(
 
   const toPhoto: (v: any) => TwitterMediaPhoto = (v: any) => ({
     ...toTwitterMediaBase(v),
-    type: 'photo',
+    type: MediaType.Photo,
   });
 
   const toVideo: (v: any) => TwitterMediaVideo = (v: any) => ({
     ...toTwitterMediaBase(v),
-    type: 'video',
+    type: MediaType.Video,
     videoInfo: {
       duration: v?.video_info?.duration_millis,
       variants: v?.video_info?.variants?.map?.((item: any) => ({
