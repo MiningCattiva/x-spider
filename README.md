@@ -4,7 +4,7 @@
 
 ## 下载
 
-[Releases](https://github.com/MoyuScript/x-spider/releases)
+[Releases](https://github.com/MiningCattiva/x-spider/releases)
 
 ## 功能
 

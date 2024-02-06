@@ -19,27 +19,27 @@ export const About: React.FC = () => {
         <p>
           <strong>作者：</strong>
           <a
-            href="https://moyuscript.github.io/MoyuScript/"
+            href="https://github.com/MiningCattiva"
             target="_blank"
             rel="noreferrer"
           >
-            MoyuScript
+            MiningCattiva
           </a>
         </p>
         <p>
           <strong>仓库地址：</strong>
           <a
-            href="https://github.com/MoyuScript/x-spider"
+            href="https://github.com/MiningCattiva/x-spider"
             target="_blank"
             rel="noreferrer"
           >
-            https://github.com/MoyuScript/x-spider
+            https://github.com/MiningCattiva/x-spider
           </a>
         </p>
         <p>
           <strong>开源协议：</strong>
           <a
-            href="https://github.com/MoyuScript/x-spider/blob/master/LICENSE"
+            href="https://github.com/MiningCattiva/x-spider/blob/master/LICENSE"
             target="_blank"
             rel="noreferrer"
           >
