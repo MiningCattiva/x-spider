@@ -18,12 +18,13 @@ export const Homepage: React.FC = () => {
     loadUser,
     clearPostList: clearMediaList,
   } = useHomepageStore();
-  const [searchHistory, addSearchHistory, clearSearchHistory] =
-    useAppStateStore((s) => [
-      s.searchHistory,
-      s.addSearchHistory,
-      s.clearSearchHistory,
-    ]);
+  const { searchHistory, addSearchHistory, clearSearchHistory, cookieString } =
+    useAppStateStore((s) => ({
+      searchHistory: s.searchHistory,
+      addSearchHistory: s.addSearchHistory,
+      clearSearchHistory: s.clearSearchHistory,
+      cookieString: s.cookieString,
+    }));
   const searchAbortControllerRef = useRef<AbortController>();
 
   const startSearch = async (sn: string) => {
@@ -64,15 +65,19 @@ export const Homepage: React.FC = () => {
               <Input
                 type="search"
                 autoComplete="search"
-                disabled={userInfo.loading}
+                disabled={userInfo.loading || !cookieString}
                 onPressEnter={() => startSearch(keyword)}
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                placeholder="请输入用户 ID，如：shiratamacaron"
+                placeholder={
+                  cookieString
+                    ? '请输入用户 ID，如：shiratamacaron'
+                    : '请先登录后再搜索'
+                }
                 className="text-center"
               />
               <Button
-                disabled={!keyword}
+                disabled={!keyword || !cookieString}
                 loading={userInfo.loading}
                 onClick={() => startSearch(keyword)}
                 type="primary"
