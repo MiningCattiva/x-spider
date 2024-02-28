@@ -30,7 +30,7 @@ export const Account: React.FC = () => {
           const accountInfo = await getAccountInfo(cookieString);
           setAccountInfo(accountInfo);
         } catch (err: any) {
-          message.error('获取账号信息失败');
+          message.error('获取账号信息失败，请检查 Cookie 或代理配置是否正确');
           console.error(err);
         }
       }
@@ -48,7 +48,7 @@ export const Account: React.FC = () => {
       setCookieString(newCookieString);
     } catch (err: any) {
       console.error(err);
-      message.error('无法登录，请检测 CookieString 是否正确');
+      message.error('无法登录，请检查 Cookie 或代理配置是否正确');
     } finally {
       setModalLoading(false);
     }
