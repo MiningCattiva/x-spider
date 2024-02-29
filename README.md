@@ -22,6 +22,6 @@
 
 ![screenshot-downloading](./assets/screenshot-downloading.jpg)
 
-## 给猫猫喂口野莓
+## 给猫猫喂口红色莓果
 
 [爱发电](https://afdian.net/a/moyuscript)
