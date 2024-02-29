@@ -21,3 +21,7 @@
 ![screenshot-settings](./assets/screenshot-settings.jpg)
 
 ![screenshot-downloading](./assets/screenshot-downloading.jpg)
+
+## 给猫猫喂口野莓
+
+[爱发电](https://afdian.net/a/moyuscript)
