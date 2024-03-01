@@ -7,14 +7,20 @@ export const About: React.FC = () => {
   return (
     <>
       <PageHeader />
-      <article className="space-y-2">
+      <article className="space-y-2 [&_a]:underline">
         <p className="flex items-center">
           <img src={Logo} className="w-28" />
           <span className="text-5xl ml-4 font-bold">X-Spider</span>
         </p>
         <p>
           <strong>版本号：</strong>
-          {PACKAGE_JSON_VERSION}
+          <a
+            href="https://github.com/MiningCattiva/x-spider/releases"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {PACKAGE_JSON_VERSION}
+          </a>
         </p>
         <p>
           <strong>作者：</strong>
@@ -44,6 +50,16 @@ export const About: React.FC = () => {
             rel="noreferrer"
           >
             {PACKAGE_JSON_LICENSE}
+          </a>
+        </p>
+        <p>
+          <strong>赞助：</strong>
+          <a
+            href="https://afdian.net/a/moyuscript"
+            target="_blank"
+            rel="noreferrer"
+          >
+            爱发电
           </a>
         </p>
       </article>
