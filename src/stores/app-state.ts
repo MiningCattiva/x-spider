@@ -10,6 +10,13 @@ export interface AppStateStore {
   searchHistory: string[];
   addSearchHistory: (keyword: string) => void;
   clearSearchHistory: () => void;
+
+  latestVersion: string;
+  latestUrl: string;
+  lastCheckUpdateTime: number;
+  setLatestVersion: (version: string) => void;
+  setLastCheckUpdateTime: (time: number) => void;
+  setLatestUrl: (url: string) => void;
 }
 
 export const useAppStateStore = create(
@@ -32,6 +39,12 @@ export const useAppStateStore = create(
         set({ searchHistory: history });
       },
       clearSearchHistory: () => set({ searchHistory: [] }),
+      latestVersion: PACKAGE_JSON_VERSION,
+      lastCheckUpdateTime: 0,
+      latestUrl: '',
+      setLastCheckUpdateTime: (time) => set({ lastCheckUpdateTime: time }),
+      setLatestVersion: (version) => set({ latestVersion: version }),
+      setLatestUrl: (url) => set({ latestUrl: url }),
     }),
     {
       name: 'app-state',

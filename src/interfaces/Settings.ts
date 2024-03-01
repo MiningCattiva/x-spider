@@ -8,6 +8,9 @@ export interface Settings_V1 {
     fileNameTemplate: string;
     sameFileSkip: boolean;
   };
+  app: {
+    autoCheckUpdate: boolean;
+  };
 }
 
 export type Settings = Settings_V1;

@@ -10,11 +10,31 @@ import { appStateLoadedEvent } from './events/app-state-loaded';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useTaskNotifications } from './hooks/useTaskNotifications';
 import zhCN from 'antd/locale/zh_CN';
+import { useAutoCheckUpdate } from './hooks/useAutoCheckUpdate';
+
+const AppInternal: React.FC = () => {
+  const currentRoute = useRouteStore((state) => state.route);
+
+  useAutoCheckUpdate();
+
+  return (
+    <div className="bg-gray-50 w-full h-full overflow-auto">
+      <SideBar />
+      <main
+        className="w-full overflow-auto transition-all pl-52"
+        key={currentRoute?.id}
+        aria-label={currentRoute?.name}
+      >
+        <div className="px-10">{currentRoute?.element}</div>
+      </main>
+    </div>
+  );
+};
 
 export const App: React.FC = () => {
   const settingsLoaded = useStoreLoaded(settingsLoadedEvent);
   const appStateLoaded = useStoreLoaded(appStateLoadedEvent);
-  const currentRoute = useRouteStore((state) => state.route);
+
   const loading = ![settingsLoaded, appStateLoaded].every(Boolean);
 
   useTaskNotifications();
@@ -32,18 +52,7 @@ export const App: React.FC = () => {
             <p className="mt-4 text-xl">应用加载中，请稍候...</p>
           </div>
         )}
-        {!loading && (
-          <div className="bg-gray-50 w-full h-full overflow-auto">
-            <SideBar />
-            <main
-              className="w-full overflow-auto transition-all pl-52"
-              key={currentRoute?.id}
-              aria-label={currentRoute?.name}
-            >
-              <div className="px-10">{currentRoute?.element}</div>
-            </main>
-          </div>
-        )}
+        {!loading && <AppInternal />}
       </div>
     </ConfigProvider>
   );

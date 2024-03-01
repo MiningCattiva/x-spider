@@ -61,6 +61,15 @@ export const Settings: React.FC = () => {
           <Input placeholder="代理地址，例如：“http://127.0.0.1:7890”" />
         </Item>
       </Section>
+      <Section title="应用" name="app">
+        <Item
+          label="自动检查更新"
+          settingKey="autoCheckUpdate"
+          valuePropName="checked"
+        >
+          <Switch />
+        </Item>
+      </Section>
     </>
   );
 };
