@@ -24,4 +24,15 @@ export interface TwitterMediaVideo extends TwitterMediaBase {
   };
 }
 
-export type TwitterMedia = TwitterMediaPhoto | TwitterMediaVideo;
+export interface TwitterMediaGif extends TwitterMediaBase {
+  type: MediaType.Gif;
+  videoInfo?: {
+    url?: string;
+    aspectRatio?: [number, number];
+  };
+}
+
+export type TwitterMedia =
+  | TwitterMediaPhoto
+  | TwitterMediaVideo
+  | TwitterMediaGif;

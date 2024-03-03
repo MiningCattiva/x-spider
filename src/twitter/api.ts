@@ -5,6 +5,7 @@ import { TwitterAccountInfo } from '../interfaces/TwitterAccountInfo';
 import {
   TwitterMedia,
   TwitterMediaBase,
+  TwitterMediaGif,
   TwitterMediaPhoto,
   TwitterMediaVideo,
 } from '../interfaces/TwitterMedia';
@@ -198,6 +199,15 @@ export async function getTwitterPosts(
     },
   });
 
+  const toGif: (v: any) => TwitterMediaGif = (v: any) => ({
+    ...toTwitterMediaBase(v),
+    type: MediaType.Gif,
+    videoInfo: {
+      url: v?.video_info?.variants?.[0]?.url,
+      aspectRatio: v?.video_info?.aspect_ratio,
+    },
+  });
+
   const pathToInstructions = R.path<any>([
     'data',
     'user',
@@ -251,6 +261,8 @@ export async function getTwitterPosts(
       R.cond<any, TwitterMedia | null>([
         [R.propEq('photo', 'type'), toPhoto],
         [R.propEq('video', 'type'), toVideo],
+        // Gif 也按照 Video 处理
+        [R.propEq('animated_gif', 'type'), toGif],
         [R.T, R.always(null)],
       ]),
     ),

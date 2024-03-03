@@ -39,7 +39,7 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
   keyword: '',
   setKeyword: (kw: string) => set({ keyword: kw }),
   filter: {
-    mediaTypes: [MediaType.Photo, MediaType.Video],
+    mediaTypes: [MediaType.Photo, MediaType.Video, MediaType.Gif],
   },
   setFilter: (filter) => set({ filter }),
 

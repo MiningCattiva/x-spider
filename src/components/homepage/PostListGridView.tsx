@@ -14,6 +14,7 @@ import { useSettings } from '../../hooks/useSettings';
 import { useDownloadStore } from '../../stores/download';
 import { message } from 'antd';
 import { getDownloadUrl } from '../../twitter/utils';
+import MediaType from '../../enums/MediaType';
 
 export const PostListGridView: React.FC = () => {
   const { userInfo, loadMorePostList, postList } = useHomepageStore(
@@ -149,13 +150,42 @@ export const PostListGridView: React.FC = () => {
             },
           };
 
+          const actionDownloadGif: GridViewItemAction = {
+            name: '下载 GIF（视频）',
+            async onClick() {
+              const post = postList.list.find(
+                (post) => post.id === media.postId,
+              )!;
+              try {
+                const downloadUrl = getDownloadUrl(media);
+                if (!downloadUrl) {
+                  message.error('无法获取下载链接');
+                  return;
+                }
+                const fileName = buildFileName(fileNameTemplate, {
+                  media,
+                  post,
+                  user: userInfo.data!,
+                  downloadUrl,
+                });
+                await createDownloadTask({
+                  post,
+                  user: userInfo.data!,
+                  media,
+                  fileName,
+                  dir: savePath,
+                  downloadUrl,
+                });
+                message.success('已添加到下载队列');
+              } catch (err: any) {
+                console.error(err);
+                message.error('创建下载任务失败');
+              }
+            },
+          };
+
           return (
             <li
-              aria-label={
-                media.type === 'photo'
-                  ? '推文图片'
-                  : `推文视频，时长${R.isNotNil(media.videoInfo?.duration) ? dayjs.duration(media.videoInfo.duration).format('mm分ss秒') : '未知'}`
-              }
               tabIndex={0}
               key={media.id}
               className="relative h-[12rem] overflow-hidden bg-white group"
@@ -167,23 +197,33 @@ export const PostListGridView: React.FC = () => {
                   loading="lazy"
                   className="object-cover w-full h-full transform transition-transform group-hover:scale-105"
                 />
-                {media.type === 'video' &&
-                  R.isNotNil(media.videoInfo?.duration) && (
-                    <span className="block absolute right-2 bottom-2 text-white bg-[rgba(0,0,0,0.6)] rounded-sm px-[0.3rem] text-sm">
-                      <span className="sr-only">视频时长：</span>
-                      {dayjs.duration(media.videoInfo.duration).format('mm:ss')}
-                    </span>
-                  )}
+                {media.type === MediaType.Video && (
+                  <span className="block absolute right-2 bottom-2 text-white bg-[rgba(0,0,0,0.6)] rounded-sm px-[0.3rem] text-sm">
+                    <span className="sr-only">视频时长：</span>
+                    {media.videoInfo?.duration
+                      ? dayjs.duration(media.videoInfo.duration).format('mm:ss')
+                      : '视频'}
+                  </span>
+                )}
+                {media.type === MediaType.Gif && (
+                  <span className="block absolute right-2 bottom-2 text-white bg-[rgba(0,0,0,0.6)] rounded-sm px-[0.3rem] text-sm">
+                    GIF
+                  </span>
+                )}
                 <div className="absolute top-0 left-0 w-full h-full bg-[rgba(0,0,0,0.7)] transition-opacity opacity-0 group-hover:opacity-100 has-[:focus]:opacity-100">
                   <GridViewItemActions
                     actions={R.cond([
                       [
-                        R.equals('photo'),
+                        R.equals(MediaType.Photo),
                         R.always([actionOpen, actionDownloadImage]),
                       ],
                       [
-                        R.equals('video'),
+                        R.equals(MediaType.Video),
                         R.always([actionOpen, actionDownloadVideo]),
+                      ],
+                      [
+                        R.equals(MediaType.Gif),
+                        R.always([actionOpen, actionDownloadGif]),
                       ],
                       [R.T, R.always([])],
                     ])(media.type).filter(R.isNotNil)}

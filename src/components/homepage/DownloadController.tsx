@@ -96,6 +96,10 @@ export const DownloadController: React.FC = () => {
                 label: '照片',
                 value: MediaType.Photo,
               },
+              {
+                label: 'GIF',
+                value: MediaType.Gif,
+              },
             ]}
           />
         </Form.Item>
