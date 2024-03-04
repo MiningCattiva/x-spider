@@ -45,13 +45,20 @@ export const About: React.FC = () => {
           <button
             onClick={async () => {
               setIsCheckingUpdate(true);
-              const hasUpdate = await checkForUpdate();
-              setIsCheckingUpdate(false);
-
-              if (!hasUpdate) {
-                dialog.message('软件已是最新版本', {
-                  title: '软件已是最新版本',
+              try {
+                const hasUpdate = await checkForUpdate();
+                if (!hasUpdate) {
+                  dialog.message('软件已是最新版本', {
+                    title: '软件已是最新版本',
+                  });
+                }
+              } catch (err) {
+                console.error(err);
+                dialog.message('无法获取最新更新，请稍后再试', {
+                  title: '获取更新错误',
                 });
+              } finally {
+                setIsCheckingUpdate(false);
               }
             }}
             className="bg-transparent text-blue-500 disabled:text-gray-400"
