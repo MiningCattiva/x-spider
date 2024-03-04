@@ -93,6 +93,13 @@ export const REPLACER_MAP: Record<
     desc: '资源高度',
     replacer: R.path(['media', 'height']),
   },
+  MEDIA_INDEX: {
+    desc: '资源索引',
+    replacer: (data) =>
+      (
+        data.post.medias!.findIndex((media) => media.id === data.media.id) + 1
+      ).toString(),
+  },
   EXT: {
     desc: '扩展名',
     replacer: R.pipe(

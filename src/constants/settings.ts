@@ -7,7 +7,8 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   download: {
     savePath: '',
-    fileNameTemplate: '%POST_TIME% %USER_SCREEN_NAME% %MEDIA_ID%%EXT%',
+    fileNameTemplate:
+      '%POST_TIME% %USER_SCREEN_NAME% %POST_ID%-%MEDIA_INDEX%%EXT%',
     sameFileSkip: true,
   },
   app: {
