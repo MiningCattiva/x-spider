@@ -1,5 +1,15 @@
 # X-Spider
 
+[![版本](https://img.shields.io/github/v/release/MiningCattiva/x-spider?label=%E7%89%88%E6%9C%AC)](https://github.com/MiningCattiva/x-spider/releases)
+[![下载数](https://img.shields.io/github/downloads/MiningCattiva/x-spider/total?style=flat&label=%E4%B8%8B%E8%BD%BD%E6%95%B0)](https://github.com/MiningCattiva/x-spider/releases)
+![操作系统](https://img.shields.io/badge/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F-Windows-yellow)
+
+
+
+
+
+
+
 一个推特媒体（图片、视频）下载器。
 
 ## 下载
