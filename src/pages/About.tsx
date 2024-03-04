@@ -6,6 +6,7 @@ import { useCheckUpdate } from '../hooks/useCheckUpdate';
 import { useAppStateStore } from '../stores/app-state';
 import { isVersionGt } from '../utils/version';
 import { dialog } from '@tauri-apps/api';
+import { Sponsors } from '../components/about/Sponsors';
 
 export const About: React.FC = () => {
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
@@ -99,6 +100,10 @@ export const About: React.FC = () => {
           >
             爱发电
           </a>
+        </p>
+        <p>
+          <strong>赞助名单：</strong>
+          <Sponsors />
         </p>
       </article>
     </>
