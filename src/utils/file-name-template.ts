@@ -3,7 +3,7 @@ import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
 import filenamify from 'filenamify';
 import * as R from 'ramda';
 
-export function buildFileName(
+export function resolveVariables(
   templateText: string,
   data: FileNameTemplateData,
   autoEscape = true,

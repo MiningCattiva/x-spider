@@ -13,8 +13,9 @@ import { aria2 } from '../utils/aria2';
 import { getTwitterPosts } from '../twitter/api';
 import { useSettingsStore } from './settings';
 import { getDownloadUrl } from '../twitter/utils';
-import { buildFileName } from '../utils/file-name-template';
+import { resolveVariables } from '../utils/file-name-template';
 import { asyncMap } from '../utils/async';
+import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
 
 async function mergeAriaStatusToDownloadTask(
   ariaStatus: any,
@@ -394,13 +395,21 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
           await asyncMap(async (m: TwitterMedia) => {
             const downloadUrl = getDownloadUrl(m);
             if (!downloadUrl) return undefined;
-            const fileName = buildFileName(settings.download.fileNameTemplate, {
+            const templateData: FileNameTemplateData = {
               media: m,
               post,
               user: task.user,
               downloadUrl,
-            });
-            const dir = settings.download.savePath;
+            };
+            const fileName = resolveVariables(
+              settings.download.fileNameTemplate,
+              templateData,
+            );
+            const dir = resolveVariables(
+              settings.download.savePath,
+              templateData,
+              false,
+            );
             const filePath = await path.join(dir, fileName);
             if (settings.download.sameFileSkip && (await fs.exists(filePath))) {
               skipCount++;

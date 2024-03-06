@@ -9,12 +9,13 @@ import { TwitterPost } from '../../interfaces/TwitterPost';
 import { TwitterMedia } from '../../interfaces/TwitterMedia';
 import { GridViewItemAction, GridViewItemActions } from './GridViewItemActions';
 import { buildPostUrl } from '../../twitter/url';
-import { buildFileName } from '../../utils/file-name-template';
+import { resolveVariables } from '../../utils/file-name-template';
 import { useSettings } from '../../hooks/useSettings';
 import { useDownloadStore } from '../../stores/download';
 import { message } from 'antd';
 import { getDownloadUrl } from '../../twitter/utils';
 import MediaType from '../../enums/MediaType';
+import { FileNameTemplateData } from '../../interfaces/FileNameTemplateData';
 
 export const PostListGridView: React.FC = () => {
   const { userInfo, loadMorePostList, postList } = useHomepageStore(
@@ -94,18 +95,23 @@ export const PostListGridView: React.FC = () => {
                   message.error('无法获取下载链接');
                   return;
                 }
-                const fileName = buildFileName(fileNameTemplate, {
+                const templateData: FileNameTemplateData = {
                   media,
                   post,
                   user: userInfo.data!,
                   downloadUrl,
-                });
+                };
+                const fileName = resolveVariables(
+                  fileNameTemplate,
+                  templateData,
+                );
+                const dir = resolveVariables(savePath, templateData, false);
                 await createDownloadTask({
                   post,
                   user: userInfo.data!,
                   media,
                   fileName,
-                  dir: savePath,
+                  dir,
                   downloadUrl,
                 });
                 message.success('已添加到下载队列');
@@ -128,18 +134,23 @@ export const PostListGridView: React.FC = () => {
                   message.error('无法获取下载链接');
                   return;
                 }
-                const fileName = buildFileName(fileNameTemplate, {
+                const templateData: FileNameTemplateData = {
                   media,
                   post,
                   user: userInfo.data!,
                   downloadUrl,
-                });
+                };
+                const fileName = resolveVariables(
+                  fileNameTemplate,
+                  templateData,
+                );
+                const dir = resolveVariables(savePath, templateData, false);
                 await createDownloadTask({
                   post,
                   user: userInfo.data!,
                   media,
                   fileName,
-                  dir: savePath,
+                  dir,
                   downloadUrl,
                 });
                 message.success('已添加到下载队列');
@@ -162,18 +173,23 @@ export const PostListGridView: React.FC = () => {
                   message.error('无法获取下载链接');
                   return;
                 }
-                const fileName = buildFileName(fileNameTemplate, {
+                const templateData: FileNameTemplateData = {
                   media,
                   post,
                   user: userInfo.data!,
                   downloadUrl,
-                });
+                };
+                const fileName = resolveVariables(
+                  fileNameTemplate,
+                  templateData,
+                );
+                const dir = resolveVariables(savePath, templateData, false);
                 await createDownloadTask({
                   post,
                   user: userInfo.data!,
                   media,
                   fileName,
-                  dir: savePath,
+                  dir,
                   downloadUrl,
                 });
                 message.success('已添加到下载队列');
