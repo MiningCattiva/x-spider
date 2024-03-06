@@ -6,14 +6,19 @@ import * as R from 'ramda';
 export function buildFileName(
   templateText: string,
   data: FileNameTemplateData,
+  autoEscape = true,
 ): string {
   return R.pipe(
     R.toPairs,
     R.reduce((acc, elem: any) => {
       const regex = new RegExp(`%${elem[0]}%`, 'gi');
-      const s = String(elem[1].replacer(data));
+      const s = filenamify(String(elem[1].replacer(data)));
       return R.replace(regex, s)(acc);
     }, templateText),
-    (str) => filenamify(str),
+    R.ifElse(
+      R.always(autoEscape),
+      (str: string) => filenamify(str),
+      R.identity,
+    ),
   )(REPLACER_MAP);
 }

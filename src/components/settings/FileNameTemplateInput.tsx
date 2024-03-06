@@ -1,10 +1,9 @@
 /* eslint-disable react/prop-types */
 
 import React from 'react';
-import { EXAMPLE_FILE_NAME_TEMPLATE_DATA } from '../../constants/file-name-template';
-import { buildFileName } from '../../utils/file-name-template';
 import { Input } from 'antd';
 import { VariablePicker } from './VariablePicker';
+import { TemplateExample } from './TemplateExample';
 
 export interface FileNameTemplateInputProps {
   value?: string;
@@ -24,12 +23,7 @@ export const FileNameTemplateInput: React.FC<FileNameTemplateInputProps> = ({
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
       />
-      <section className="text-gray-600 text-xs mt-4">
-        <strong>输出示例：</strong>
-        <span>
-          {buildFileName(value || '', EXAMPLE_FILE_NAME_TEMPLATE_DATA)}
-        </span>
-      </section>
+      <TemplateExample value={value} />
     </div>
   );
 };
