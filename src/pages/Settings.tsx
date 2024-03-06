@@ -16,23 +16,18 @@ export const Settings: React.FC = () => {
       <Section title="下载" name="download" titleIcon={<DownloadOutlined />}>
         <Item
           validator={(value) => {
-            return (
-              Joi.string()
-                .required()
-                .error(new Error('请填写保存路径模板'))
-                .validate(value).error?.message ||
-              Joi.string()
-                .pattern(
-                  // eslint-disable-next-line
-                  /^([a-z]:)(((\\|\/)[a-z0-9^&'@{}\[\],$=!\-#\(\)%\.\+~_]+)*(\\|\/))([^\\\/:\*\"<>\|]+(\.[a-z0-9]+)?)$/i,
-                )
-                .error(
-                  new Error(
-                    '路径有误，请检查路径是否正确，不能包含以下字符：? * / \\ < > : " |',
-                  ),
-                )
-                .validate(value).error?.message
-            );
+            return Joi.string()
+              .pattern(
+                // eslint-disable-next-line
+                /^([a-z]:)((\\[a-z0-9^&'@{}\[\],$=!\-#\(\)%\.\+~_]+)*\\)([^\\\/:\*\"<>\|]+(\.[a-z0-9]+)?)$/i,
+              )
+              .message(
+                '路径有误，请检查路径是否正确，路径不能以 \\ 结尾且文件（夹）名不能包含以下字符：? * / \\ < > : " |',
+              )
+              .messages({
+                'string.empty': '请填写保存路径模板',
+              })
+              .validate(value).error?.message;
           }}
           label="保存路径模板"
           settingKey="savePath"
@@ -45,8 +40,9 @@ export const Settings: React.FC = () => {
           description="文件名中的非法字符将会被自动替换"
           validator={(value) => {
             return Joi.string()
-              .required()
-              .error(new Error('请填写保存文件名模板'))
+              .messages({
+                'string.empty': '请填写保存文件名模板',
+              })
               .validate(value).error?.message;
           }}
         >
