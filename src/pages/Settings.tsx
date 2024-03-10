@@ -84,6 +84,14 @@ export const Settings: React.FC = () => {
         >
           <Switch />
         </Item>
+        <Item
+          label="接收预览版"
+          description="预览版更新更频繁，能获取到最新的特性，但不太稳定，可能会出现各种错误。"
+          settingKey="acceptPrerelease"
+          valuePropName="checked"
+        >
+          <Switch />
+        </Item>
       </Section>
     </>
   );

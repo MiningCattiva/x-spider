@@ -1,8 +1,9 @@
 import { useLockFn } from 'ahooks';
 import { useAppStateStore } from '../stores/app-state';
-import { getLatestRelease } from '../github/api';
+import { getLatestReleases } from '../github/api';
 import { isVersionGt } from '../utils/version';
 import { dialog, shell } from '@tauri-apps/api';
+import { useSettings } from './useSettings';
 
 export function useCheckUpdate() {
   const { setLatestVersion, setLatestUrl, setLastCheckUpdateTime } =
@@ -11,14 +12,15 @@ export function useCheckUpdate() {
       setLatestUrl: s.setLatestUrl,
       setLastCheckUpdateTime: s.setLastCheckUpdateTime,
     }));
+  const { value: pre } = useSettings<boolean>('app', 'acceptPrerelease');
   return useLockFn(async () => {
-    const release = await getLatestRelease();
+    const release = await getLatestReleases(pre);
     setLastCheckUpdateTime(Date.now());
 
     const latestVersion = release.tag_name.slice(1) as string;
+    setLatestVersion(latestVersion);
+    setLatestUrl(release.html_url);
     if (isVersionGt(latestVersion, PACKAGE_JSON_VERSION)) {
-      setLatestVersion(latestVersion);
-      setLatestUrl(release.html_url);
       dialog
         .ask('软件有最新版本，是否前往下载？', {
           title: '更新提示',

@@ -10,6 +10,7 @@ export interface Settings_V1 {
   };
   app: {
     autoCheckUpdate: boolean;
+    acceptPrerelease: boolean;
   };
 }
 
