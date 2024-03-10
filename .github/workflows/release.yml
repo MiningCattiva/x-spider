@@ -1,7 +1,5 @@
 name: Auto release
 on:
-  push:
-    branches: ["dev"]
   workflow_dispatch:
 
 permissions:
