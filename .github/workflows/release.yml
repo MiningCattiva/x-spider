@@ -2,13 +2,6 @@ name: Auto release
 on:
   push:
     branches: ["dev"]
-    paths:
-      - "src/**"
-      - "src-tauri/**"
-      - "/index.html"
-      - "/postcss.config.js"
-      - "/tailwind.config.js"
-      - "/vite.config.ts"
   workflow_dispatch:
 
 permissions:
