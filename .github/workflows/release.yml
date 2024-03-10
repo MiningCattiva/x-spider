@@ -1,0 +1,71 @@
+name: Auto release
+on:
+  push:
+    branches: ["dev"]
+    paths:
+      - "src/**"
+      - "src-tauri/**"
+      - "/index.html"
+      - "/postcss.config.js"
+      - "/tailwind.config.js"
+      - "/vite.config.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v3
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - name: Cache Rust Builds
+        id: cache-rust-builds
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src-tauri/target/
+          key: ${{ runner.os }}-cache-rust-builds
+      - name: Install dependencies
+        run: pnpm i
+      - name: Bump version
+        id: bumpVersion
+        run: 'pnpm version prerelease -m "chore: Auto release %s"'
+      - name: Build
+        run: pnpm tauri build
+      - name: Push
+        run: |
+          git push
+          git push --tags
+      - name: Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(git describe --abbrev=0 --tags)
+          gh release create $VERSION ./src-tauri/target/release/bundle/nsis/* --prerelease --notes "该发布为自动构建的预览版本。" --generate-notes --title $VERSION
+      - name: Cleanup Bundles
+        run: |
+          rm -Recurse -Force src-tauri/target/release/bundle
+          rm ".\src-tauri\target\release\x-spider.d",".\src-tauri\target\release\x-spider.exe",".\src-tauri\target\release\x_spider.pdb"
