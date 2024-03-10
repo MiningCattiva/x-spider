@@ -79,7 +79,7 @@ function App() {
               </ul>
               <a
                 className="bg-white rounded-md hover:scale-105 transition-all text-black flex items-center mt-8 px-4 py-2"
-                href="https://github.com/MiningCattiva/x-spider/releases"
+                href="https://github.com/MiningCattiva/x-spider/releases/latest"
                 target="_blank"
               >
                 <span>
