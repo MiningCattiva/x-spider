@@ -62,6 +62,14 @@ export const Settings: React.FC = () => {
           <Switch />
         </Item>
         <Item
+          label="使用系统代理"
+          settingKey="useSystem"
+          valuePropName="checked"
+          description="自动使用系统代理，如果代理未生效，可能是你的代理软件没有自动设置系统代理，此时请手动配置代理地址。"
+        >
+          <Switch />
+        </Item>
+        <Item
           label="代理地址"
           settingKey="url"
           validator={(val) => {

@@ -2,6 +2,7 @@ export interface Settings_V1 {
   proxy: {
     enable: boolean;
     url: string;
+    useSystem: boolean;
   };
   download: {
     savePath: string;

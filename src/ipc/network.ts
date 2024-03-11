@@ -19,7 +19,7 @@ export async function request(options: RequestOptions) {
     url.href,
     R.defaultTo('', options.body),
     settings.proxy.enable,
-    settings.proxy.url,
+    settings.proxy.useSystem ? '' : settings.proxy.url,
     R.defaultTo({}, options.headers),
     options.responseType,
   );
