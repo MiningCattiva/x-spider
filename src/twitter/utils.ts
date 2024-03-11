@@ -5,7 +5,7 @@ export function getDownloadUrl(media: TwitterMedia): string | undefined {
   if (media.type === MediaType.Photo) {
     if (!media.url) return undefined;
     const url = new URL(media.url);
-    url.searchParams.set('name', 'large');
+    url.searchParams.set('name', '4096x4096');
     return url.href;
   }
 
