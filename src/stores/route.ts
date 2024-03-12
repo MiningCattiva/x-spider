@@ -32,4 +32,4 @@ setTimeout(() => {
   useRouteStore.setState({
     route: getRouteFromHash() || ROUTES[0],
   });
-}, 0);
+}, 10);

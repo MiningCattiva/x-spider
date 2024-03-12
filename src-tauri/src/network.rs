@@ -108,3 +108,18 @@ pub async fn network_fetch(
     body,
     headers: resp_headers })
 }
+
+#[tauri::command]
+pub async fn network_get_system_proxy_url() -> Result<HashMap<String, String>, ()> {
+  let proxies = reqwest::get_system_proxy_map();
+  let mut mapped_proxies: HashMap<String, String> = HashMap::with_capacity(proxies.len());
+
+  for (key, value) in proxies {
+    mapped_proxies.insert(key.clone(), match value {
+      reqwest::ProxyScheme::Http { host, .. } => host.to_string(),
+      reqwest::ProxyScheme::Https { host, .. } => host.to_string(),
+    });
+  }
+
+  Ok(mapped_proxies)
+}

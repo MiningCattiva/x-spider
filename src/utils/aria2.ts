@@ -1,6 +1,8 @@
 import { Child, Command } from '@tauri-apps/api/shell';
 import { EventEmitter } from './event';
-import { SettingsStore, useSettingsStore } from '../stores/settings';
+import { useSettingsStore } from '../stores/settings';
+import { getSystemProxy } from '../ipc/network';
+import { systemProxyChangedEvent } from '../events/system-proxy';
 
 class Aria2 {
   #ready = false;
@@ -43,12 +45,30 @@ class Aria2 {
     });
 
     useSettingsStore.subscribe(this.#onSettingsStoreChanged.bind(this));
+    systemProxyChangedEvent.listen(this.#onSystemProxyChanged.bind(this));
   }
 
-  #onSettingsStoreChanged(state: SettingsStore) {
-    this.invoke('aria2.changeGlobalOption', {
-      'all-proxy': state.proxy.enable ? state.proxy.url : '',
+  async #updateProxy() {
+    await this.invoke('aria2.changeGlobalOption', {
+      'all-proxy': await this.#resolveProxyValue(),
     });
+  }
+
+  async #resolveProxyValue() {
+    const settings = useSettingsStore.getState();
+    if (!settings.proxy.enable) return '';
+    if (settings.proxy.useSystem) {
+      return await getSystemProxy();
+    }
+    return settings.proxy.url;
+  }
+
+  #onSettingsStoreChanged() {
+    this.#updateProxy();
+  }
+
+  #onSystemProxyChanged() {
+    this.#updateProxy();
   }
 
   #onStdout(message: string) {

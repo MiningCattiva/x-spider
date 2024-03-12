@@ -44,3 +44,14 @@ async function requestInternal(
     responseType,
   });
 }
+
+export async function getSystemProxy(): Promise<string> {
+  const map: Record<string, string> = await invoke(
+    'network_get_system_proxy_url',
+  );
+  const value = map.https || map.http;
+  if (value) {
+    return `http://${value}`;
+  }
+  return '';
+}
