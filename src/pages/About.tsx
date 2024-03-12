@@ -19,12 +19,12 @@ export const About: React.FC = () => {
   return (
     <>
       <PageHeader />
-      <article className="space-y-2 [&_a]:underline">
-        <p className="flex items-center">
-          <img src={Logo} className="w-28" />
-          <span className="text-5xl ml-4 font-bold">X-Spider</span>
-        </p>
-        <p>
+      <section className="flex items-center">
+        <img src={Logo} className="w-28" alt="logo" />
+        <span className="text-5xl ml-4 font-bold">X-Spider</span>
+      </section>
+      <ul className="space-y-2 [&_a]:underline">
+        <li>
           <strong>版本号：</strong>
           <span>{PACKAGE_JSON_VERSION}</span>
           {isVersionGt(latestVersion, PACKAGE_JSON_VERSION) && (
@@ -67,8 +67,8 @@ export const About: React.FC = () => {
             {isCheckingUpdate ? '请稍候...' : '检查更新'}
           </button>
           ）
-        </p>
-        <p>
+        </li>
+        <li>
           <strong>作者：</strong>
           <a
             href="https://github.com/MiningCattiva"
@@ -77,8 +77,8 @@ export const About: React.FC = () => {
           >
             MiningCattiva
           </a>
-        </p>
-        <p>
+        </li>
+        <li>
           <strong>仓库地址：</strong>
           <a
             href="https://github.com/MiningCattiva/x-spider"
@@ -87,8 +87,8 @@ export const About: React.FC = () => {
           >
             https://github.com/MiningCattiva/x-spider
           </a>
-        </p>
-        <p>
+        </li>
+        <li>
           <strong>开源协议：</strong>
           <a
             href="https://github.com/MiningCattiva/x-spider/blob/master/LICENSE"
@@ -97,8 +97,8 @@ export const About: React.FC = () => {
           >
             {PACKAGE_JSON_LICENSE}
           </a>
-        </p>
-        <p>
+        </li>
+        <li>
           <strong>赞助：</strong>
           <a
             href="https://afdian.net/a/moyuscript"
@@ -107,12 +107,12 @@ export const About: React.FC = () => {
           >
             爱发电
           </a>
-        </p>
-        <p>
+        </li>
+        <li>
           <strong>赞助名单：</strong>
           <Sponsors />
-        </p>
-      </article>
+        </li>
+      </ul>
     </>
   );
 };

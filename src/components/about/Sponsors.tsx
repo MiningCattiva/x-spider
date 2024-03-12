@@ -28,15 +28,15 @@ export const Sponsors: React.FC = () => {
       title="跳转到赞助页"
       className="block bg-[#946ce6] rounded-md mt-2 p-4 !no-underline hover:text-[color:initial] group"
     >
-      <h2 className="text-white flex items-center font-bold text-2xl justify-center  ">
+      <span className="text-white flex items-center font-bold text-2xl justify-center  ">
         <img
           className="w-12 mr-2 group-hover:rotate-[1turn] transition-transform duration-500"
           src="https://afdian.net/static/img/logo/afdian_logo.png"
           alt="爱发电LOGO"
         />
         <span>爱发电</span>
-      </h2>
-      <div className="mt-4 p-2 bg-white rounded-md">
+      </span>
+      <span className="block mt-4 p-2 bg-white rounded-md">
         <ul className="flex space-x-2 ">
           {data &&
             data.list.map((item: any) => (
@@ -55,7 +55,7 @@ export const Sponsors: React.FC = () => {
             ))}
         </ul>
         {loading && !data && <span>加载名单中...</span>}
-      </div>
+      </span>
     </a>
   );
 };
