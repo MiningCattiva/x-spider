@@ -1,8 +1,8 @@
 import { TwitterMedia } from './TwitterMedia';
+import { TwitterUser } from './TwitterUser';
 
 export interface TwitterPost {
   id?: string;
-  ownerId?: string;
   createdAt?: number;
   fullText?: string;
   tags?: string[];
@@ -17,4 +17,5 @@ export interface TwitterPost {
   bookmarkCount?: number;
   bookmarked?: boolean;
   medias?: TwitterMedia[];
+  user?: TwitterUser;
 }

@@ -176,7 +176,6 @@ export async function getTwitterPosts(
       url: v?.media_url_https,
       width: v?.original_info?.width,
       height: v?.original_info?.height,
-      twitterPostId: v?.twitterPostId,
     };
   };
 
@@ -261,7 +260,6 @@ export async function getTwitterPosts(
       R.cond<any, TwitterMedia | null>([
         [R.propEq('photo', 'type'), toPhoto],
         [R.propEq('video', 'type'), toVideo],
-        // Gif 也按照 Video 处理
         [R.propEq('animated_gif', 'type'), toGif],
         [R.T, R.always(null)],
       ]),
@@ -278,7 +276,6 @@ export async function getTwitterPosts(
       createdAt: item?.legacy?.created_at
         ? dayjs(item.legacy.created_at).unix() * 1000
         : undefined,
-      ownerId: item?.core?.user_results?.result?.rest_id,
       bookmarkCount: item?.legacy?.bookmark_count,
       bookmarked: item?.legacy?.bookmarked,
       favoriteCount: item?.legacy?.favorite_count,
@@ -296,6 +293,14 @@ export async function getTwitterPosts(
         R.path<any>(['legacy', 'entities', 'hashtags']),
         R.ifElse(R.isNotNil, R.map(R.prop('text')), R.always([])),
       )(item),
+      user: {
+        id: item?.core?.user_results?.result?.rest_id,
+        avatar:
+          item?.core?.user_results?.result?.legacy?.profile_image_url_https,
+        mediaCount: item?.core?.user_results?.result?.legacy?.media_count,
+        name: item?.core?.user_results?.result?.legacy?.name,
+        screenName: item?.core?.user_results?.result?.legacy?.screen_name,
+      },
     };
   });
 

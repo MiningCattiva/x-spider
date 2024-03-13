@@ -6,7 +6,6 @@ import * as R from 'ramda';
 export function resolveVariables(
   templateText: string,
   data: FileNameTemplateData,
-  autoEscape = true,
 ): string {
   return R.pipe(
     R.toPairs,
@@ -15,10 +14,5 @@ export function resolveVariables(
       const s = filenamify(String(elem[1].replacer(data)));
       return R.replace(regex, s)(acc);
     }, templateText),
-    R.ifElse(
-      R.always(autoEscape),
-      (str: string) => filenamify(str),
-      R.identity,
-    ),
   )(REPLACER_MAP);
 }

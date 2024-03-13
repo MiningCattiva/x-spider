@@ -5,17 +5,12 @@ import { EXAMPLE_FILE_NAME_TEMPLATE_DATA } from '../../constants/file-name-templ
 
 export const TemplateExample: React.FC<{
   value?: string;
-  autoEscape?: boolean;
-}> = ({ value, autoEscape }) => {
+}> = ({ value }) => {
   return (
     <section className="text-gray-600 text-xs mt-4">
       <strong>输出示例：</strong>
       <span>
-        {resolveVariables(
-          value || '',
-          EXAMPLE_FILE_NAME_TEMPLATE_DATA,
-          autoEscape,
-        )}
+        {resolveVariables(value || '', EXAMPLE_FILE_NAME_TEMPLATE_DATA)}
       </span>
     </section>
   );

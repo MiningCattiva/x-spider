@@ -15,4 +15,22 @@ export interface Settings_V1 {
   };
 }
 
-export type Settings = Settings_V1;
+export interface Settings_V2 {
+  proxy: {
+    enable: boolean;
+    url: string;
+    useSystem: boolean;
+  };
+  download: {
+    saveDirBase: string;
+    dirTemplate: string;
+    fileNameTemplate: string;
+    sameFileSkip: boolean;
+  };
+  app: {
+    autoCheckUpdate: boolean;
+    acceptPrerelease: boolean;
+  };
+}
+
+export type Settings = Settings_V2;

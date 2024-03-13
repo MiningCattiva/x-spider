@@ -1,21 +1,17 @@
 /* eslint-disable react/prop-types */
-import React, { useMemo } from 'react';
-import { InfiniteScroll } from '../InfiniteScroll';
 import { LoadingOutlined } from '@ant-design/icons';
-import { useHomepageStore } from '../../stores/homepage';
+import { message } from 'antd';
 import dayjs from 'dayjs';
 import * as R from 'ramda';
-import { TwitterPost } from '../../interfaces/TwitterPost';
-import { TwitterMedia } from '../../interfaces/TwitterMedia';
-import { GridViewItemAction, GridViewItemActions } from './GridViewItemActions';
-import { buildPostUrl } from '../../twitter/url';
-import { resolveVariables } from '../../utils/file-name-template';
-import { useSettings } from '../../hooks/useSettings';
-import { useDownloadStore } from '../../stores/download';
-import { message } from 'antd';
-import { getDownloadUrl } from '../../twitter/utils';
+import React, { useMemo } from 'react';
 import MediaType from '../../enums/MediaType';
-import { FileNameTemplateData } from '../../interfaces/FileNameTemplateData';
+import { TwitterMedia } from '../../interfaces/TwitterMedia';
+import { TwitterPost } from '../../interfaces/TwitterPost';
+import { useDownloadStore } from '../../stores/download';
+import { useHomepageStore } from '../../stores/homepage';
+import { buildPostUrl } from '../../twitter/url';
+import { InfiniteScroll } from '../InfiniteScroll';
+import { GridViewItemAction, GridViewItemActions } from './GridViewItemActions';
 
 export const PostListGridView: React.FC = () => {
   const { userInfo, loadMorePostList, postList } = useHomepageStore(
@@ -25,11 +21,6 @@ export const PostListGridView: React.FC = () => {
       userInfo: state.userInfo,
     }),
   );
-  const { value: fileNameTemplate } = useSettings<string>(
-    'download',
-    'fileNameTemplate',
-  );
-  const { value: savePath } = useSettings<string>('download', 'savePath');
   const createDownloadTask = useDownloadStore(
     (state) => state.createDownloadTask,
   );
@@ -83,121 +74,35 @@ export const PostListGridView: React.FC = () => {
               }
             : undefined;
 
+          async function commonDownload() {
+            const post = postList.list.find(
+              (post) => post.id === media.postId,
+            )!;
+            try {
+              await createDownloadTask({
+                post,
+                media,
+              });
+              message.success('已添加到下载队列');
+            } catch (err: any) {
+              console.error(err);
+              message.error(`创建下载任务失败：${err?.message}`);
+            }
+          }
+
           const actionDownloadImage: GridViewItemAction = {
             name: '下载图片',
-            async onClick() {
-              const post = postList.list.find(
-                (post) => post.id === media.postId,
-              )!;
-              try {
-                const downloadUrl = getDownloadUrl(media);
-                if (!downloadUrl) {
-                  message.error('无法获取下载链接');
-                  return;
-                }
-                const templateData: FileNameTemplateData = {
-                  media,
-                  post,
-                  user: userInfo.data!,
-                  downloadUrl,
-                };
-                const fileName = resolveVariables(
-                  fileNameTemplate,
-                  templateData,
-                );
-                const dir = resolveVariables(savePath, templateData, false);
-                await createDownloadTask({
-                  post,
-                  user: userInfo.data!,
-                  media,
-                  fileName,
-                  dir,
-                  downloadUrl,
-                });
-                message.success('已添加到下载队列');
-              } catch (err: any) {
-                console.error(err);
-                message.error('创建下载任务失败');
-              }
-            },
+            onClick: commonDownload,
           };
 
           const actionDownloadVideo: GridViewItemAction = {
             name: '下载视频',
-            async onClick() {
-              const post = postList.list.find(
-                (post) => post.id === media.postId,
-              )!;
-              try {
-                const downloadUrl = getDownloadUrl(media);
-                if (!downloadUrl) {
-                  message.error('无法获取下载链接');
-                  return;
-                }
-                const templateData: FileNameTemplateData = {
-                  media,
-                  post,
-                  user: userInfo.data!,
-                  downloadUrl,
-                };
-                const fileName = resolveVariables(
-                  fileNameTemplate,
-                  templateData,
-                );
-                const dir = resolveVariables(savePath, templateData, false);
-                await createDownloadTask({
-                  post,
-                  user: userInfo.data!,
-                  media,
-                  fileName,
-                  dir,
-                  downloadUrl,
-                });
-                message.success('已添加到下载队列');
-              } catch (err: any) {
-                console.error(err);
-                message.error('创建下载任务失败');
-              }
-            },
+            onClick: commonDownload,
           };
 
           const actionDownloadGif: GridViewItemAction = {
             name: '下载 GIF（视频）',
-            async onClick() {
-              const post = postList.list.find(
-                (post) => post.id === media.postId,
-              )!;
-              try {
-                const downloadUrl = getDownloadUrl(media);
-                if (!downloadUrl) {
-                  message.error('无法获取下载链接');
-                  return;
-                }
-                const templateData: FileNameTemplateData = {
-                  media,
-                  post,
-                  user: userInfo.data!,
-                  downloadUrl,
-                };
-                const fileName = resolveVariables(
-                  fileNameTemplate,
-                  templateData,
-                );
-                const dir = resolveVariables(savePath, templateData, false);
-                await createDownloadTask({
-                  post,
-                  user: userInfo.data!,
-                  media,
-                  fileName,
-                  dir,
-                  downloadUrl,
-                });
-                message.success('已添加到下载队列');
-              } catch (err: any) {
-                console.error(err);
-                message.error('创建下载任务失败');
-              }
-            },
+            onClick: commonDownload,
           };
 
           return (

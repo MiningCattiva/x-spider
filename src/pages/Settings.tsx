@@ -17,22 +17,34 @@ export const Settings: React.FC = () => {
         <Item
           validator={(value) => {
             return Joi.string()
-              .pattern(
-                // eslint-disable-next-line
-                /^([a-z]:)((\\[a-z0-9^&'@{}\[\],$=!\-#\(\)%\.\+~_]+)*\\)([^\\\/:\*\"<>\|]+(\.[a-z0-9]+)?)$/i,
-              )
-              .message(
-                '路径有误，请检查路径是否正确，路径不能以 \\ 结尾且文件（夹）名不能包含以下字符：? * / \\ < > : " |',
-              )
               .messages({
                 'string.empty': '请填写保存路径模板',
               })
               .validate(value).error?.message;
           }}
-          label="保存路径模板"
-          settingKey="savePath"
+          label="保存路径"
+          settingKey="saveDirBase"
         >
           <SavePathSelector required />
+        </Item>
+        <Item
+          validator={(value) => {
+            return Joi.string()
+              .pattern(
+                // eslint-disable-next-line
+                /^([^\\\/:\*\"<>\|]\\?)+$/,
+              )
+              .message(
+                '文件夹名有误，请检查文件夹名是否正确，文件夹名不能包含以下字符：? * / \\ < > : " |',
+              )
+              .allow('')
+              .validate(value).error?.message;
+          }}
+          label="文件夹模板"
+          settingKey="dirTemplate"
+          description="为空时下载的文件直接保存在上方的“保存路径”里面"
+        >
+          <FileNameTemplateInput />
         </Item>
         <Item
           settingKey="fileNameTemplate"

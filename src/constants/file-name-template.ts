@@ -5,12 +5,21 @@ import { TwitterUser } from '../interfaces/TwitterUser';
 import * as R from 'ramda';
 import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
 import MediaType from '../enums/MediaType';
+import { getDownloadUrl } from '../twitter/utils';
+
+export const EXAMPLE_USER: Required<TwitterUser> = {
+  avatar:
+    'https://pbs.twimg.com/profile_images/1440258619912585220/KiYN-52Z_normal.jpg',
+  name: '这是用户昵称',
+  screenName: 'userscreenname',
+  id: '1145141919',
+  mediaCount: 8888,
+};
 
 export const EXAMPLE_POST: Required<TwitterPost> = {
   id: '1145141919810',
   views: 13496,
   createdAt: 1705756536000,
-  ownerId: '114514',
   bookmarkCount: 1,
   bookmarked: false,
   favoriteCount: 228,
@@ -31,15 +40,7 @@ export const EXAMPLE_POST: Required<TwitterPost> = {
     },
   ],
   tags: ['标签1', '标签2'],
-};
-
-export const EXAMPLE_USER: Required<TwitterUser> = {
-  avatar:
-    'https://pbs.twimg.com/profile_images/1440258619912585220/KiYN-52Z_normal.jpg',
-  name: '这是用户昵称',
-  screenName: 'userscreenname',
-  id: '1145141919',
-  mediaCount: 8888,
+  user: EXAMPLE_USER,
 };
 
 export const EXAMPLE_MEDIA: Required<TwitterMedia> = EXAMPLE_POST
@@ -48,8 +49,6 @@ export const EXAMPLE_MEDIA: Required<TwitterMedia> = EXAMPLE_POST
 export const EXAMPLE_FILE_NAME_TEMPLATE_DATA: FileNameTemplateData = {
   media: EXAMPLE_MEDIA,
   post: EXAMPLE_POST,
-  user: EXAMPLE_USER,
-  downloadUrl: EXAMPLE_MEDIA.url,
 };
 
 export const REPLACER_MAP: Record<
@@ -71,27 +70,27 @@ export const REPLACER_MAP: Record<
   },
   USER_ID: {
     desc: '用户 ID',
-    replacer: R.path(['post', 'ownerId']),
+    replacer: R.path(['post', 'user', 'id']),
   },
   USER_NAME: {
     desc: '用户昵称',
-    replacer: R.path(['user', 'name']),
+    replacer: R.path(['post', 'user', 'name']),
   },
   USER_SCREEN_NAME: {
     desc: '用户名',
-    replacer: R.path(['user', 'screenName']),
+    replacer: R.path(['post', 'user', 'screenName']),
   },
   MEDIA_ID: {
     desc: '资源 ID',
-    replacer: R.path(['media', 'id']),
+    replacer: R.path(['post', 'media', 'id']),
   },
   MEDIA_WIDTH: {
     desc: '资源宽度',
-    replacer: R.path(['media', 'width']),
+    replacer: R.path(['post', 'media', 'width']),
   },
   MEDIA_HEIGHT: {
     desc: '资源高度',
-    replacer: R.path(['media', 'height']),
+    replacer: R.path(['post', 'media', 'height']),
   },
   MEDIA_INDEX: {
     desc: '资源索引',
@@ -103,8 +102,7 @@ export const REPLACER_MAP: Record<
   EXT: {
     desc: '扩展名',
     replacer: R.pipe(
-      // @ts-ignore
-      R.prop('downloadUrl'),
+      (data) => getDownloadUrl(data.media),
       R.split('.'),
       R.last,
       R.split('?'),

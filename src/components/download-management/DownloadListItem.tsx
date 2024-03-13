@@ -134,8 +134,8 @@ export const DownloadListItem: React.FC<DownloadListItemProps> = ({
     >
       <a
         href={
-          t.user.screenName && t.post.id
-            ? buildPostUrl(t.user.screenName, t.post.id)
+          t.post.user?.screenName && t.post.id
+            ? buildPostUrl(t.post.user.screenName, t.post.id)
             : 'javascript:void(0);'
         }
         target="_blank"
@@ -162,18 +162,18 @@ export const DownloadListItem: React.FC<DownloadListItemProps> = ({
         </p>
         <a
           href={
-            t.user.screenName
-              ? buildUserUrl(t.user.screenName)
+            t.post.user?.screenName
+              ? buildUserUrl(t.post.user?.screenName)
               : 'javascript:void(0);'
           }
-          title={`跳转到 ${t.user.name} 的主页`}
+          title={`跳转到 ${t.post.user?.name || t.post.user?.screenName || '未知用户'} 的主页`}
           target="_blank"
           rel="noreferrer"
           className="text-xs flex items-center space-x-1 w-fit text-ant-color-text-secondary bg-gray-100 p-1 rounded-full pr-2 overflow-hidden"
         >
-          <Avatar src={t.user.avatar} size={20} />
-          <span>{t.user.name}</span>
-          <span>@{t.user.screenName}</span>
+          <Avatar src={t.post.user?.avatar} size={20} />
+          <span>{t.post.user?.name || '未知用户'}</span>
+          {t.post.user?.screenName && <span>@{t.post.user.screenName}</span>}
         </a>
         <div className="mt-2">
           <TaskActions

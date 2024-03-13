@@ -160,7 +160,11 @@ class Aria2 {
         if (data.id !== id.toString()) return;
         this.#ws!.removeEventListener('message', cb);
         if (data.error) {
-          reject(data.error.message);
+          const err = new Error(
+            `Aria2 调用 ${method} 失败：${data.error.message}`,
+          );
+          console.error({ err, method, args });
+          reject(err);
           return;
         }
         resolve(data.result);

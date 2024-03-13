@@ -7,7 +7,8 @@ export const DEFAULT_SETTINGS: Settings = {
     useSystem: true,
   },
   download: {
-    savePath: '',
+    saveDirBase: '',
+    dirTemplate: '',
     fileNameTemplate:
       '%POST_TIME% %USER_SCREEN_NAME% %POST_ID%-%MEDIA_INDEX%%EXT%',
     sameFileSkip: true,
@@ -18,4 +19,4 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 };
 
-export const CURRENT_SETTINGS_VERSION = 1;
+export const CURRENT_SETTINGS_VERSION = 2;

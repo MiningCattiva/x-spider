@@ -37,17 +37,24 @@ export const useSettingsStore = create(
           if (error) return;
 
           // 如果没有默认保存路径，设置为系统 Downloads 文件夹所在地
-          if (!state?.download.savePath) {
+          if (!state?.download.saveDirBase) {
             const dir = await path.downloadDir();
             useSettingsStore.setState({
               download: R.mergeDeepRight(state!.download, {
-                savePath: dir,
+                saveDirBase: dir,
               }),
             });
           }
 
           settingsLoadedEvent.emit();
         };
+      },
+      migrate(state: any, version) {
+        if (version === 1) {
+          delete state.download.savePath;
+        }
+
+        return state;
       },
     },
   ),
