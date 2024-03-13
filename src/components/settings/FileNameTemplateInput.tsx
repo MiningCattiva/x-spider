@@ -18,7 +18,7 @@ export const FileNameTemplateInput: React.FC<FileNameTemplateInputProps> = ({
     <div>
       <VariablePicker />
       <Input
-        placeholder="请输入文件名格式"
+        placeholder="请输入内容，支持使用变量"
         aria-describedby="file-name-template-input-variables"
         value={value}
         onChange={(e) => onChange?.(e.target.value)}

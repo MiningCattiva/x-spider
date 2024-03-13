@@ -49,9 +49,15 @@ export const Settings: React.FC = () => {
         <Item
           settingKey="fileNameTemplate"
           label="文件名模板"
-          description="文件名中的非法字符将会被自动替换"
           validator={(value) => {
             return Joi.string()
+              .pattern(
+                // eslint-disable-next-line
+                /^[^\\\/:\*\"<>\|]+$/,
+              )
+              .message(
+                '文件名有误，请检查文件名是否正确，文件名不能包含以下字符：? * / \\ < > : " |',
+              )
               .messages({
                 'string.empty': '请填写保存文件名模板',
               })
