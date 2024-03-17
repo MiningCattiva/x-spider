@@ -1,7 +1,7 @@
 export interface TwitterUser {
-  screenName?: string;
-  avatar?: string;
-  name?: string;
-  id?: string;
+  screenName: string;
+  avatar: string;
+  name: string;
+  id: string;
   mediaCount?: number;
 }

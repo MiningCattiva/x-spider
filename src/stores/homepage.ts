@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { TwitterUser } from '../interfaces/TwitterUser';
-import { getUser, getTwitterPosts } from '../twitter/api';
+import { getUser, getUserMedias } from '../twitter/api';
 import { TwitterPost } from '../interfaces/TwitterPost';
 import { DownloadFilter } from '../interfaces/DownloadFilter';
 import MediaType from '../enums/MediaType';
@@ -116,8 +116,7 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
     });
 
     try {
-      const { twitterPosts, cursor: nextCursor } =
-        await getTwitterPosts(userId);
+      const { twitterPosts, cursor: nextCursor } = await getUserMedias(userId);
 
       if (abortController) {
         abortController.signal.throwIfAborted();
@@ -164,7 +163,7 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
       },
     });
 
-    const { twitterPosts, cursor: nextCursor } = await getTwitterPosts(
+    const { twitterPosts, cursor: nextCursor } = await getUserMedias(
       userId,
       postList.cursor,
     );

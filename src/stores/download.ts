@@ -9,7 +9,7 @@ import { TwitterMedia } from '../interfaces/TwitterMedia';
 import { TwitterPost } from '../interfaces/TwitterPost';
 import { TwitterUser } from '../interfaces/TwitterUser';
 import { aria2 } from '../utils/aria2';
-import { getTwitterPosts } from '../twitter/api';
+import { getUserMedias } from '../twitter/api';
 import { useSettingsStore } from './settings';
 import { getDownloadUrl } from '../twitter/utils';
 import { resolveVariables } from '../utils/file-name-template';
@@ -404,7 +404,7 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
   let skipCount = 0;
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const { twitterPosts, cursor: nextCursor } = await getTwitterPosts(
+    const { twitterPosts, cursor: nextCursor } = await getUserMedias(
       user.id,
       cursor,
     );
