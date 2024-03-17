@@ -111,7 +111,10 @@ export async function getUser(screenName: string): Promise<TwitterUser> {
   };
 }
 
-function extractTwitterPosts(instructions: any): TwitterPost[] | undefined {
+const extractTwitterPosts = (
+  pathToInstructions: (data: any) => any,
+  data: any,
+): TwitterPost[] | undefined => {
   const mapTwitterPosts = (posts: any[]) => {
     const mapTwitterMedias = (medias: any[]) => {
       const toTwitterMediaBase: (v: any) => TwitterMediaBase = (v: any) => {
@@ -234,18 +237,26 @@ function extractTwitterPosts(instructions: any): TwitterPost[] | undefined {
     )(instructions);
   };
 
-  return R.pipe(pathToTwitterPostItems, mapTwitterPosts)(instructions);
-}
+  return R.pipe(
+    pathToInstructions,
+    pathToTwitterPostItems,
+    mapTwitterPosts,
+  )(data);
+};
 
-function extractNextCursor(instructions: any): string | null {
-  return R.pipe<any, any, any, any, string | undefined, string | null>(
+const extractNextCursor = (
+  pathToInstructions: (data: any) => any,
+  data: any,
+): string | null => {
+  return R.pipe<any, any, any, any, any, string | undefined, string | null>(
+    pathToInstructions,
     R.find(R.pathEq('TimelineAddEntries', ['type'])),
     R.prop('entries'),
     R.find(R.pathEq('Bottom', ['content', 'cursorType'])),
     R.path(['content', 'value']),
     R.defaultTo(null),
-  )(instructions);
-}
+  )(data);
+};
 
 export async function getUserMedias(
   userId: string,
@@ -296,7 +307,7 @@ export async function getUserMedias(
         withV2Timeline: true,
       }),
     },
-    headers: await getCommonHeaders(),
+    headers: getCommonHeaders(),
   });
   ensureResponse(resp);
 
@@ -309,12 +320,7 @@ export async function getUserMedias(
     'instructions',
   ]);
 
-  const extractTwitterPostsInternal = R.pipe<
-    any,
-    any,
-    TwitterPost[] | undefined
-  >(pathToInstructions, extractTwitterPosts);
-  const twitterPosts = extractTwitterPostsInternal(resp.body);
+  const twitterPosts = extractTwitterPosts(pathToInstructions, resp.body);
 
   if (!twitterPosts || twitterPosts.length === 0) {
     return {
@@ -323,7 +329,87 @@ export async function getUserMedias(
     };
   }
 
-  const nextCursor = R.pipe(pathToInstructions, extractNextCursor)(resp.body);
+  const nextCursor = extractNextCursor(pathToInstructions, resp.body);
+
+  return {
+    twitterPosts,
+    cursor: nextCursor,
+  };
+}
+
+export async function searchTimeline(
+  userScreenName: string,
+  since: dayjs.Dayjs,
+  until: dayjs.Dayjs,
+  product: string,
+  cursor?: string,
+  count = 20,
+): Promise<{
+  twitterPosts: TwitterPost[];
+  cursor: string | null;
+}> {
+  const resp = await request({
+    method: 'GET',
+    url: 'https://twitter.com/i/api/graphql/flaR-PUMshxFWZWPNpq4zA/SearchTimeline',
+    responseType: 'json',
+    query: {
+      features: JSON.stringify({
+        responsive_web_graphql_exclude_directive_enabled: true,
+        verified_phone_label_enabled: false,
+        creator_subscriptions_tweet_preview_api_enabled: true,
+        responsive_web_graphql_timeline_navigation_enabled: true,
+        responsive_web_graphql_skip_user_profile_image_extensions_enabled:
+          false,
+        c9s_tweet_anatomy_moderator_badge_enabled: true,
+        tweetypie_unmention_optimization_enabled: true,
+        responsive_web_edit_tweet_api_enabled: true,
+        graphql_is_translatable_rweb_tweet_is_translatable_enabled: true,
+        view_counts_everywhere_api_enabled: true,
+        longform_notetweets_consumption_enabled: true,
+        responsive_web_twitter_article_tweet_consumption_enabled: true,
+        tweet_awards_web_tipping_enabled: false,
+        freedom_of_speech_not_reach_fetch_enabled: true,
+        standardized_nudges_misinfo: true,
+        tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled:
+          true,
+        rweb_video_timestamps_enabled: true,
+        longform_notetweets_rich_text_read_enabled: true,
+        longform_notetweets_inline_media_enabled: true,
+        responsive_web_media_download_video_enabled: false,
+        responsive_web_enhance_cards_enabled: false,
+      }),
+      variables: JSON.stringify({
+        rawQuery: `(from:${userScreenName})`,
+        count,
+        cursor,
+        querySource: '',
+        product,
+        since: since && since.format('YYYY-MM-DD'),
+        until: until && until.format('YYYY-MM-DD'),
+      }),
+    },
+    headers: getCommonHeaders(),
+  });
+  ensureResponse(resp);
+
+  const pathToInstructions = R.path<any>([
+    'data',
+    'search_by_raw_query',
+    'search_timeline',
+    'timeline',
+    'instructions',
+  ]);
+
+  const twitterPosts = extractTwitterPosts(pathToInstructions, resp.body);
+
+  if (!twitterPosts || twitterPosts.length === 0) {
+    return {
+      cursor: null,
+      twitterPosts: [],
+    };
+  }
+
+  const nextCursor = extractNextCursor(pathToInstructions, resp.body);
 
   return {
     twitterPosts,
