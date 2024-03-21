@@ -8,6 +8,7 @@ import { LogoutOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import FormItem from 'antd/es/form/FormItem';
 import { useForm } from 'antd/es/form/Form';
 import { parseCookie, stringifyCookie } from '../utils/cookie';
+import clsx from 'clsx';
 
 export const Account: React.FC = () => {
   const [cookieString, setCookieString] = useAppStateStore((state) => [
@@ -19,6 +20,7 @@ export const Account: React.FC = () => {
   const [accountInfo, setAccountInfo] = useState<TwitterAccountInfo | null>(
     null,
   );
+  const [loading, setLoading] = useState(false);
   const [form] = useForm();
 
   useEffect(() => {
@@ -26,12 +28,15 @@ export const Account: React.FC = () => {
       if (!cookieString) {
         setAccountInfo(null);
       } else {
+        setLoading(true);
         try {
           const accountInfo = await getAccountInfo(cookieString);
           setAccountInfo(accountInfo);
         } catch (err: any) {
           message.error('获取账号信息失败，请检查 Cookie 或代理配置是否正确');
           console.error(err);
+        } finally {
+          setLoading(false);
         }
       }
     })();
@@ -70,10 +75,14 @@ export const Account: React.FC = () => {
           {!accountInfo && (
             <>
               <button
-                className="bg-transparent"
+                disabled={loading}
+                className={clsx(
+                  'bg-transparent',
+                  loading && 'hover:cursor-wait',
+                )}
                 onClick={() => setModalOpen(true)}
               >
-                <Avatar size={50}>登录</Avatar>
+                <Avatar size={50}>{loading ? '加载中' : '登录'}</Avatar>
               </button>
               <span className="sr-only" role="alert">
                 账号未登录
