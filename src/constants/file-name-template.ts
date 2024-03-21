@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { TwitterMedia } from '../interfaces/TwitterMedia';
 import { TwitterPost } from '../interfaces/TwitterPost';
 import { TwitterUser } from '../interfaces/TwitterUser';
@@ -14,12 +14,13 @@ export const EXAMPLE_USER: Required<TwitterUser> = {
   screenName: 'userscreenname',
   id: '1145141919',
   mediaCount: 8888,
+  registerTime: dayjs('2024-01-01'),
 };
 
 export const EXAMPLE_POST: Required<TwitterPost> = {
   id: '1145141919810',
   views: 13496,
-  createdAt: 1705756536000,
+  createdAt: dayjs(1705756536000),
   bookmarkCount: 1,
   bookmarked: false,
   favoriteCount: 228,
@@ -64,8 +65,8 @@ export const REPLACER_MAP: Record<
   },
   POST_TIME: {
     desc: '推文发布时间',
-    replacer: R.pipe(R.path(['post', 'createdAt']), (ts: any) =>
-      dayjs(ts).format('YYYY-MM-DD HH-mm-ss'),
+    replacer: R.pipe(R.path(['post', 'createdAt']), (ts?: Dayjs) =>
+      ts!.format('YYYY-MM-DD HH-mm-ss'),
     ),
   },
   USER_ID: {

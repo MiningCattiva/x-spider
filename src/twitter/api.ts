@@ -97,7 +97,7 @@ export async function getUser(screenName: string): Promise<TwitterUser> {
   const data = R.path(['data', 'user', 'result', 'legacy'])(resp.body) as any;
 
   if (!data) {
-    throw new Error('User not found');
+    throw new Error('找不到该用户');
   }
 
   return {
@@ -108,6 +108,7 @@ export async function getUser(screenName: string): Promise<TwitterUser> {
       resp.body,
     ) as string,
     mediaCount: data?.media_count,
+    registerTime: dayjs(data.created_at),
   };
 }
 
@@ -166,16 +167,13 @@ const extractTwitterPosts = (
         R.filter<TwitterMedia | null, TwitterMedia>(R.isNotNil),
       )(medias);
     };
-
     return R.map<any, TwitterPost>((item) => {
       return {
         id: item?.rest_id,
         views: R.isNotNil(item?.views?.count)
           ? Number(item.views.count)
           : undefined,
-        createdAt: item?.legacy?.created_at
-          ? dayjs(item.legacy.created_at).unix() * 1000
-          : undefined,
+        createdAt: dayjs(item.legacy.created_at),
         bookmarkCount: item?.legacy?.bookmark_count,
         bookmarked: item?.legacy?.bookmarked,
         favoriteCount: item?.legacy?.favorite_count,
@@ -200,20 +198,21 @@ const extractTwitterPosts = (
           mediaCount: item?.core?.user_results?.result?.legacy?.media_count,
           name: item?.core?.user_results?.result?.legacy?.name,
           screenName: item?.core?.user_results?.result?.legacy?.screen_name,
+          registerTime: item?.core?.user_results?.result?.legacy?.created_at,
         },
       };
     })(posts);
   };
 
   const pathToTwitterPostItems = (instructions: any): any => {
-    const pathToModuleItemsFirst = R.pipe(
+    const pathToModuleItemsFirst = R.pipe<[any], any, any, any, any>(
       R.find(R.pathEq('TimelineAddEntries', ['type'])),
       R.prop('entries'),
       R.find(R.pathEq('TimelineTimelineModule', ['content', 'entryType'])),
       R.both(R.isNotNil, R.path<any>(['content', 'items'])),
     );
 
-    const pathToModuleItemsMore = R.pipe(
+    const pathToModuleItemsMore = R.pipe<[any], any, any>(
       R.find(R.pathEq('TimelineAddToModule', ['type'])),
       R.both(R.isNotNil, R.prop('moduleItems')),
     );
@@ -221,7 +220,7 @@ const extractTwitterPosts = (
     return R.pipe<any, any, any[]>(
       R.either(pathToModuleItemsFirst, pathToModuleItemsMore),
       R.ifElse(
-        R.isNil,
+        (param) => !param,
         R.always([]),
         R.map(
           R.pipe(
@@ -236,7 +235,6 @@ const extractTwitterPosts = (
       ),
     )(instructions);
   };
-
   return R.pipe(
     pathToInstructions,
     pathToTwitterPostItems,
@@ -337,11 +335,10 @@ export async function getUserMedias(
   };
 }
 
-export async function searchTimeline(
+export async function searchTimelineMedia(
   userScreenName: string,
   since: dayjs.Dayjs,
   until: dayjs.Dayjs,
-  product: string,
   cursor?: string,
   count = 20,
 ): Promise<{
@@ -379,13 +376,12 @@ export async function searchTimeline(
         responsive_web_enhance_cards_enabled: false,
       }),
       variables: JSON.stringify({
-        rawQuery: `(from:${userScreenName})`,
+        // until 加一天以包含
+        rawQuery: `(from:${userScreenName}) since:${since.format('YYYY-MM-DD')} until:${until.add(1, 'day').format('YYYY-MM-DD')}`,
         count,
         cursor,
         querySource: '',
-        product,
-        since: since && since.format('YYYY-MM-DD'),
-        until: until && until.format('YYYY-MM-DD'),
+        product: 'Media',
       }),
     },
     headers: getCommonHeaders(),
@@ -415,4 +411,39 @@ export async function searchTimeline(
     twitterPosts,
     cursor: nextCursor,
   };
+}
+
+export async function* searchTimelineMediaGenerator(
+  userScreenName: string,
+  since: dayjs.Dayjs,
+  until: dayjs.Dayjs,
+  count = 20,
+): AsyncGenerator<TwitterPost[]> {
+  let currentDate = until;
+  let cursor: string | undefined = undefined;
+  while (currentDate.isAfter(since)) {
+    const startOfMonthCurrentDate = currentDate.startOf('month');
+    const sinceParam = startOfMonthCurrentDate.isBefore(since)
+      ? since
+      : startOfMonthCurrentDate;
+    const untilParam = currentDate;
+    const { twitterPosts, cursor: nextCursor } = await searchTimelineMedia(
+      userScreenName,
+      sinceParam,
+      untilParam,
+      cursor,
+      count,
+    );
+    if (twitterPosts.length === 0) {
+      cursor = undefined;
+      currentDate = currentDate.subtract(1, 'month').endOf('month');
+      continue;
+    }
+    yield twitterPosts;
+    if (nextCursor) {
+      cursor = nextCursor;
+    } else {
+      currentDate = currentDate.subtract(1, 'month').endOf('month');
+    }
+  }
 }

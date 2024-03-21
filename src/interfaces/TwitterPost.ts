@@ -1,10 +1,11 @@
+import { Dayjs } from 'dayjs';
 import { TwitterMedia } from './TwitterMedia';
 import { TwitterUser } from './TwitterUser';
 
 export interface TwitterPost {
   id: string;
   user: TwitterUser;
-  createdAt?: number;
+  createdAt: Dayjs;
   fullText?: string;
   tags?: string[];
   views?: number;

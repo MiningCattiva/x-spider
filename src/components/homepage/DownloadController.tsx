@@ -2,7 +2,7 @@
 import React from 'react';
 import { useHomepageStore } from '../../stores/homepage';
 import { Button, Checkbox, DatePicker, Form, message } from 'antd';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { useDownloadStore } from '../../stores/download';
 import MediaType from '../../enums/MediaType';
 
@@ -41,17 +41,9 @@ export const DownloadController: React.FC = () => {
       <h2 className="font-bold mb-4">下载配置</h2>
       <Form
         layout="inline"
-        initialValues={{
-          dateRange: filter.dateRange
-            ? filter.dateRange.map((d) => dayjs.unix(d / 1000))
-            : undefined,
-          mediaTypes: filter.mediaTypes,
-        }}
+        initialValues={filter}
         onValuesChange={(_, values) => {
-          setFilter({
-            dateRange: values.dateRange?.map((d: Dayjs) => d.unix() * 1000),
-            mediaTypes: values.mediaTypes,
-          });
+          setFilter(values);
         }}
       >
         <Form.Item name="dateRange" label="日期范围">

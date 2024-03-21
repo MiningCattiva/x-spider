@@ -9,11 +9,12 @@ import { TwitterMedia } from '../interfaces/TwitterMedia';
 import { TwitterPost } from '../interfaces/TwitterPost';
 import { TwitterUser } from '../interfaces/TwitterUser';
 import { aria2 } from '../utils/aria2';
-import { getUserMedias } from '../twitter/api';
+import { searchTimelineMediaGenerator } from '../twitter/api';
 import { useSettingsStore } from './settings';
 import { getDownloadUrl } from '../twitter/utils';
 import { resolveVariables } from '../utils/file-name-template';
 import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
+import dayjs from 'dayjs';
 
 export interface CreateDownloadTaskParams {
   post: TwitterPost;
@@ -218,20 +219,23 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
       )
     ).flat();
 
-    const statusList: any[] = await aria2.batchInvoke(
-      gids.map((gid) => ({
-        methodName: 'aria2.tellStatus',
-        params: [gid],
-      })),
-    );
+    const statusList: any[] = (
+      await aria2.batchInvoke(
+        gids.map((gid) => ({
+          methodName: 'aria2.tellStatus',
+          params: [gid],
+        })),
+      )
+    ).flat();
 
     tasks.forEach((task, index) => {
       task.gid = gids[index];
       task.status = statusList[index].status;
     });
 
+    const newTasks = get().downloadTasks.concat(tasks);
     set({
-      downloadTasks: get().downloadTasks.concat(...tasks),
+      downloadTasks: newTasks,
     });
   },
   pauseDownloadTask: async (gid) => {
@@ -376,19 +380,6 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
   const { batchCreateDownloadTask, updateCreationTask } =
     useDownloadStore.getState();
   const settings = useSettingsStore.getState();
-  const filterPosts = R.filter<TwitterPost>(
-    R.allPass([
-      // Filter dateRange
-      (post) => {
-        if (!filter.dateRange) return true;
-        if (!post?.createdAt) return false;
-        return (
-          filter.dateRange[0] <= post.createdAt &&
-          filter.dateRange[1] >= post.createdAt
-        );
-      },
-    ]),
-  );
 
   const filterMedias = R.filter<TwitterMedia>(
     R.allPass([
@@ -399,23 +390,18 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
     ]),
   );
 
-  let cursor: string | undefined;
   let completeCount = 0;
   let skipCount = 0;
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const { twitterPosts, cursor: nextCursor } = await getUserMedias(
-      user.id,
-      cursor,
-    );
-    cursor = nextCursor || undefined;
+
+  const since = filter.dateRange ? filter.dateRange[0] : user.registerTime;
+  const until = filter.dateRange ? filter.dateRange[1] : dayjs();
+  for await (const twitterPosts of searchTimelineMediaGenerator(
+    user.screenName,
+    since,
+    until,
+    20,
+  )) {
     if (abortSignal.aborted) {
-      return;
-    }
-
-    const posts = filterPosts(twitterPosts);
-
-    if (posts.length === 0) {
       return;
     }
 
@@ -456,8 +442,6 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
     });
 
     if (abortSignal.aborted) return;
-
-    if (!cursor) return;
   }
 }
 
