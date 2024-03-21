@@ -438,7 +438,14 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
       }
     }
 
-    if (paramsList.length === 0) continue;
+    if (paramsList.length === 0) {
+      updateCreationTask({
+        ...task,
+        completeCount,
+        skipCount,
+      });
+      continue;
+    }
 
     await batchCreateDownloadTask(paramsList);
     completeCount += paramsList.length;
