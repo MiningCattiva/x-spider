@@ -37,7 +37,7 @@ export const Sponsors: React.FC = () => {
         <span>爱发电</span>
       </span>
       <span className="block mt-4 p-2 bg-white rounded-md">
-        <ul className="flex space-x-2 ">
+        <ul className="flex space-x-2 flex-wrap space-y-2">
           {data &&
             data.list.map((item: any) => (
               <li
