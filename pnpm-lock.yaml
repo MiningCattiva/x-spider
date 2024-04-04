@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@ant-design/icons':
-    specifier: ^5.2.6
-    version: 5.2.6(react-dom@18.2.0)(react@18.2.0)
+    specifier: ^5.3.6
+    version: 5.3.6(react-dom@18.2.0)(react@18.2.0)
   '@tauri-apps/api':
     specifier: ^1.5.3
     version: 1.5.3
@@ -26,6 +26,9 @@ dependencies:
   filenamify:
     specifier: ^6.0.0
     version: 6.0.0
+  immer:
+    specifier: ^10.0.4
+    version: 10.0.4
   joi:
     specifier: ^17.11.1
     version: 17.11.1
@@ -46,7 +49,7 @@ dependencies:
     version: 1.8.10(react-dom@18.2.0)(react@18.2.0)
   zustand:
     specifier: ^4.4.7
-    version: 4.4.7(@types/react@18.2.47)(react@18.2.0)
+    version: 4.4.7(@types/react@18.2.47)(immer@10.0.4)(react@18.2.0)
 
 devDependencies:
   '@commitlint/cli':
@@ -156,19 +159,19 @@ packages:
       stylis: 4.3.1
     dev: false
 
-  /@ant-design/icons-svg@4.3.1:
-    resolution: {integrity: sha512-4QBZg8ccyC6LPIRii7A0bZUk3+lEDCLnhB+FVsflGdcWPPmV+j3fire4AwwoqHV/BibgvBmR9ZIo4s867smv+g==}
+  /@ant-design/icons-svg@4.4.2:
+    resolution: {integrity: sha512-vHbT+zJEVzllwP+CM+ul7reTEfBR0vgxFe7+lREAsAA7YGsYpboiq2sQNeQeRvh09GfQgs/GyFEvZpJ9cLXpXA==}
     dev: false
 
-  /@ant-design/icons@5.2.6(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-4wn0WShF43TrggskBJPRqCD0fcHbzTYjnaoskdiJrVHg86yxoZ8ZUqsXvyn4WUqehRiFKnaclOhqk9w4Ui2KVw==}
+  /@ant-design/icons@5.3.6(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-JeWsgNjvkTTC73YDPgWOgdScRku/iHN9JU0qk39OSEmJSCiRghQMLlxGTCY5ovbRRoXjxHXnUKgQEgBDnQfKmA==}
     engines: {node: '>=8'}
     peerDependencies:
       react: '>=16.0.0'
       react-dom: '>=16.0.0'
     dependencies:
       '@ant-design/colors': 7.0.2
-      '@ant-design/icons-svg': 4.3.1
+      '@ant-design/icons-svg': 4.4.2
       '@babel/runtime': 7.23.8
       classnames: 2.5.1
       rc-util: 5.38.1(react-dom@18.2.0)(react@18.2.0)
@@ -1615,7 +1618,7 @@ packages:
     dependencies:
       '@ant-design/colors': 7.0.2
       '@ant-design/cssinjs': 1.18.2(react-dom@18.2.0)(react@18.2.0)
-      '@ant-design/icons': 5.2.6(react-dom@18.2.0)(react@18.2.0)
+      '@ant-design/icons': 5.3.6(react-dom@18.2.0)(react@18.2.0)
       '@ant-design/react-slick': 1.0.2(react@18.2.0)
       '@ctrl/tinycolor': 3.6.1
       '@rc-component/color-picker': 1.5.1(react-dom@18.2.0)(react@18.2.0)
@@ -2832,6 +2835,10 @@ packages:
     resolution: {integrity: sha512-g7dmpshy+gD7mh88OC9NwSGTKoc3kyLAZQRU1mt53Aw/vnvfXnbC+F/7F7QoYVKbV+KNvJx8wArewKy1vXMtlg==}
     engines: {node: '>= 4'}
     dev: true
+
+  /immer@10.0.4:
+    resolution: {integrity: sha512-cuBuGK40P/sk5IzWa9QPUaAdvPHjkk1c+xYsd9oZw+YQQEV+10G0P5uMpGctZZKnyQ+ibRO08bD25nWLmYi2pw==}
+    dev: false
 
   /import-fresh@3.3.0:
     resolution: {integrity: sha512-veYYhQa+D1QBKznvhUHxb8faxlrwUnxseDAbAp457E0wLNio2bOSKnjYDhMj+YiAq61xrMGhQk9iXVk5FzgQMw==}
@@ -5325,7 +5332,7 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /zustand@4.4.7(@types/react@18.2.47)(react@18.2.0):
+  /zustand@4.4.7(@types/react@18.2.47)(immer@10.0.4)(react@18.2.0):
     resolution: {integrity: sha512-QFJWJMdlETcI69paJwhSMJz7PPWjVP8Sjhclxmxmxv/RYI7ZOvR5BHX+ktH0we9gTWQMxcne8q1OY8xxz604gw==}
     engines: {node: '>=12.7.0'}
     peerDependencies:
@@ -5341,6 +5348,7 @@ packages:
         optional: true
     dependencies:
       '@types/react': 18.2.47
+      immer: 10.0.4
       react: 18.2.0
       use-sync-external-store: 1.2.0(react@18.2.0)
     dev: false

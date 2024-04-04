@@ -1,16 +1,26 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
 import { useHomepageStore } from '../../stores/homepage';
-import { Button, Checkbox, DatePicker, Form, message } from 'antd';
+import {
+  Button,
+  Checkbox,
+  DatePicker,
+  Form,
+  Space,
+  Tooltip,
+  message,
+} from 'antd';
 import dayjs from 'dayjs';
 import { useDownloadStore } from '../../stores/download';
 import MediaType from '../../enums/MediaType';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 
 export const DownloadController: React.FC = () => {
-  const { filter, setFilter, user } = useHomepageStore((s) => ({
+  const { filter, setFilter, user, loadPostList } = useHomepageStore((s) => ({
     filter: s.filter,
     setFilter: s.setFilter,
     user: s.userInfo.data,
+    loadPostList: s.loadPostList,
   }));
   const { createCreationTask } = useDownloadStore((s) => ({
     createCreationTask: s.createCreationTask,
@@ -99,7 +109,19 @@ export const DownloadController: React.FC = () => {
       <hr className="my-4" />
       <section className="flex space-x-2">
         <Button type="primary" onClick={onStartDownload}>
-          开始下载
+          <Space>
+            <span>开始下载</span>
+            <Tooltip title="由于推特限制，更早的媒体可能无法下载到。">
+              <QuestionCircleOutlined />
+            </Tooltip>
+          </Space>
+        </Button>
+        <Button
+          onClick={() => {
+            loadPostList();
+          }}
+        >
+          刷新列表
         </Button>
       </section>
     </section>

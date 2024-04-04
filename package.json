@@ -12,7 +12,9 @@
     "tauri": "tauri",
     "lint": "prettier --write ./src/**/*.{ts,tsx,js,jsx,cjs} && eslint --fix ./src/**/*.{ts,tsx,js,jsx,cjs}",
     "prepare": "husky install",
-    "build:icons": "tauri icon ./src-tauri/icons/icon.png"
+    "build:icons": "tauri icon ./src-tauri/icons/icon.png",
+    "typeCheck": "tsc --noEmit",
+    "precommit": "lint-staged && npm run typeCheck"
   },
   "lint-staged": {
     "./src/**/*.{ts,tsx,js,jsx,cjs}": [
@@ -21,13 +23,14 @@
     ]
   },
   "dependencies": {
-    "@ant-design/icons": "^5.2.6",
+    "@ant-design/icons": "^5.3.6",
     "@tauri-apps/api": "^1.5.3",
     "ahooks": "^3.7.8",
     "antd": "^5.12.8",
     "clsx": "^2.1.0",
     "dayjs": "^1.11.10",
     "filenamify": "^6.0.0",
+    "immer": "^10.0.4",
     "joi": "^17.11.1",
     "nanoid": "^5.0.4",
     "ramda": "^0.29.1",

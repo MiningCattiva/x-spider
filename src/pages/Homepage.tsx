@@ -14,7 +14,6 @@ export const Homepage: React.FC = () => {
     setKeyword,
     userInfo,
     clearUser,
-    loadPostList,
     loadUser,
     clearPostList: clearMediaList,
   } = useHomepageStore();
@@ -39,19 +38,12 @@ export const Homepage: React.FC = () => {
     clearUser();
     clearMediaList();
 
-    const abortion = (searchAbortControllerRef.current = new AbortController());
     try {
-      await loadUser(sn, searchAbortControllerRef.current);
+      await loadUser(sn);
       addSearchHistory(sn);
-      await loadPostList(searchAbortControllerRef.current);
     } catch (err: any) {
-      if (abortion.signal.aborted) return;
       console.error(err);
-      if (err?.message === 'User not found') {
-        message.error('请检查用户 ID 是否正确');
-      } else {
-        message.error('加载失败，请稍后重试');
-      }
+      message.error('加载失败，请检查用户 ID 是否正确');
     }
   };
 
@@ -156,7 +148,12 @@ export const Homepage: React.FC = () => {
                     <Avatar src={userInfo.data.avatar} size={50} alt="头像" />
                   </div>
                   <div className="ml-2">
-                    <p>{userInfo.data.name || '未知用户'}</p>
+                    <p>
+                      {userInfo.data.name || '未知用户'}
+                      <span className="text-gray-400">
+                        （共 {userInfo.data.mediaCount || 0} 个媒体）
+                      </span>
+                    </p>
                     {userInfo.data.screenName ? (
                       <p className="text-ant-color-text-secondary text-sm mt-1">
                         @{userInfo.data.screenName}
@@ -165,17 +162,18 @@ export const Homepage: React.FC = () => {
                   </div>
                 </a>
               </section>
-              <p className="mt-3">共 {userInfo.data.mediaCount || 0} 个媒体</p>
             </>
           )}
         </div>
       </div>
-      <section
-        className="relative grow mt-4 pb-4 overflow-hidden h-full min-h-[50vh]"
-        aria-label="内容预览"
-      >
-        <PostListGridView />
-      </section>
+      {userInfo.data && (
+        <section
+          className="relative grow mt-4 pb-4 overflow-hidden h-full min-h-[50vh]"
+          aria-label="内容预览"
+        >
+          <PostListGridView />
+        </section>
+      )}
     </div>
   );
 };

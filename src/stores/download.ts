@@ -9,12 +9,11 @@ import { TwitterMedia } from '../interfaces/TwitterMedia';
 import { TwitterPost } from '../interfaces/TwitterPost';
 import { TwitterUser } from '../interfaces/TwitterUser';
 import { aria2 } from '../utils/aria2';
-import { searchTimelineMediaGenerator } from '../twitter/api';
+import { getUserMedias } from '../twitter/api';
 import { useSettingsStore } from './settings';
 import { getDownloadUrl } from '../twitter/utils';
 import { resolveVariables } from '../utils/file-name-template';
 import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
-import dayjs from 'dayjs';
 
 export interface CreateDownloadTaskParams {
   post: TwitterPost;
@@ -373,44 +372,47 @@ aria2.onDownloadStop.listen(onAria2StatusChanged);
 async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
   const { filter, user } = task;
 
-  if (!user.id) {
-    throw new Error('用户 ID 未定义');
-  }
-
   const { batchCreateDownloadTask, updateCreationTask } =
     useDownloadStore.getState();
   const settings = useSettingsStore.getState();
 
-  const filterMedias = R.filter<TwitterMedia>(
-    R.allPass([
-      (media) => {
-        if (!filter.mediaTypes) return false;
-        return filter.mediaTypes.includes(media.type);
-      },
-    ]),
-  );
-
   let completeCount = 0;
   let skipCount = 0;
 
-  const since = filter.dateRange ? filter.dateRange[0] : user.registerTime;
-  const until = filter.dateRange ? filter.dateRange[1] : dayjs();
-  for await (const twitterPosts of searchTimelineMediaGenerator(
-    user.screenName,
-    since,
-    until,
-    20,
-  )) {
+  const since = filter.dateRange?.[0];
+  const until = filter.dateRange?.[1];
+  let nextCursor: string | undefined | null = undefined;
+
+  while (nextCursor !== null) {
     if (abortSignal.aborted) {
       return;
     }
 
+    const { twitterPosts, cursor } = await getUserMedias(user.id, nextCursor);
+    nextCursor = cursor;
+
+    const filteredPosts = twitterPosts.filter(
+      R.allPass([
+        (post) => (post.medias ? post.medias.length >= 0 : false),
+        (post) => (until ? post.createdAt.isBefore(until) : true),
+        (post) => (since ? post.createdAt.isAfter(since) : true),
+      ]),
+    );
+
+    if (filteredPosts.length === 0) break;
+
     const paramsList: CreateDownloadTaskParams[] = [];
 
-    for (const post of twitterPosts) {
-      if (!post.medias || post.medias.length === 0) continue;
-
-      for (const media of filterMedias(post.medias)) {
+    for (const post of filteredPosts) {
+      const filteredMedias = post.medias!.filter(
+        R.allPass([
+          (media) => {
+            if (!filter.mediaTypes) return false;
+            return filter.mediaTypes.includes(media.type);
+          },
+        ]),
+      );
+      for (const media of filteredMedias) {
         const task = await prepareDownloadTask({ post, media });
         const filePath = await path.join(task.dir, task.fileName);
         if (settings.download.sameFileSkip && (await fs.exists(filePath))) {

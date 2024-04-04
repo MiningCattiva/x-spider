@@ -4,11 +4,12 @@ import { getUser, getUserMedias } from '../twitter/api';
 import { TwitterPost } from '../interfaces/TwitterPost';
 import { DownloadFilter } from '../interfaces/DownloadFilter';
 import MediaType from '../enums/MediaType';
+import { produce } from 'immer';
 
 export interface PostListRequest {
-  list: TwitterPost[];
-  cursor: string | null;
+  list?: TwitterPost[];
   loading: boolean;
+  cursor: string | null;
 }
 
 export interface UserInfoRequest {
@@ -23,17 +24,17 @@ export interface HomepageStore {
   setFilter: (filter: DownloadFilter) => void;
 
   userInfo: UserInfoRequest;
-  loadUser: (
-    screenName: string,
-    abortController?: AbortController,
-  ) => Promise<void>;
+  loadUser: (screenName: string) => Promise<void>;
   clearUser: () => void;
 
   postList: PostListRequest;
   clearPostList: () => void;
-  loadPostList: (abortController?: AbortController) => Promise<void>;
-  loadMorePostList: (abortController?: AbortController) => Promise<void>;
+  loadPostList: () => Promise<void>;
+  loadMorePostList: () => Promise<void>;
 }
+
+let loadPostListAbortController = new AbortController();
+let loadUserAbortController = new AbortController();
 
 export const useHomepageStore = create<HomepageStore>((set, get) => ({
   keyword: '',
@@ -47,7 +48,7 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
     loading: false,
     data: undefined,
   },
-  loadUser: async (screenName: string, abortController) => {
+  loadUser: async (screenName: string) => {
     set({
       userInfo: {
         data: undefined,
@@ -55,11 +56,14 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
       },
     });
 
+    loadUserAbortController.abort();
+    loadUserAbortController = new AbortController();
+
     try {
       const value = await getUser(screenName);
 
-      if (abortController) {
-        abortController.signal.throwIfAborted();
+      if (loadUserAbortController.signal.aborted) {
+        return;
       }
 
       set({
@@ -87,97 +91,102 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
     }),
 
   postList: {
-    cursor: null,
-    list: [],
+    list: undefined,
     loading: false,
+    cursor: null,
   },
+  postListGenerator: undefined,
   clearPostList: () => {
     set({
       postList: {
         cursor: null,
-        list: [],
+        list: undefined,
         loading: false,
       },
     });
   },
-  loadPostList: async (abortController) => {
-    const userId = get().userInfo.data?.id;
+  loadPostList: async () => {
+    loadPostListAbortController.abort();
+    loadPostListAbortController = new AbortController();
+    const state = get();
+    const userInfo = state.userInfo.data;
 
-    if (!userId) {
-      throw new Error('No userId');
+    if (!userInfo) {
+      throw new Error('No userInfo');
     }
 
     set({
       postList: {
         cursor: null,
-        list: [],
+        list: undefined,
         loading: true,
       },
     });
 
-    try {
-      const { twitterPosts, cursor: nextCursor } = await getUserMedias(userId);
+    const { cursor, twitterPosts } = await getUserMedias(userInfo.id);
 
-      if (abortController) {
-        abortController.signal.throwIfAborted();
+    if (loadPostListAbortController.signal.aborted) {
+      return;
+    }
+    set({
+      postList: {
+        list: twitterPosts,
+        loading: false,
+        cursor,
+      },
+    });
+  },
+  loadMorePostList: async () => {
+    const state = get();
+    const postList = state.postList;
+    const userInfo = state.userInfo.data;
+
+    if (!postList.list) {
+      throw new Error('未初始化列表');
+    }
+    if (postList.loading) {
+      throw new Error('已正在加载中');
+    }
+    if (!postList.cursor) {
+      throw new Error('没有更多数据了');
+    }
+    if (!userInfo) {
+      throw new Error('未加载用户信息');
+    }
+
+    set(
+      produce(state, (draft) => {
+        draft.postList.loading = true;
+      }),
+    );
+
+    loadPostListAbortController.abort();
+    loadPostListAbortController = new AbortController();
+
+    try {
+      const { twitterPosts, cursor } = await getUserMedias(
+        userInfo.id,
+        postList.cursor,
+      );
+
+      if (loadPostListAbortController.signal.aborted) {
+        return;
       }
 
       set({
         postList: {
-          cursor: nextCursor,
-          list: twitterPosts,
           loading: false,
+          list: (postList.list || []).concat(twitterPosts),
+          cursor,
         },
       });
     } catch (err: any) {
-      set({
-        postList: {
-          cursor: null,
-          list: [],
-          loading: false,
-        },
-      });
+      set(
+        produce(state, (draft) => {
+          draft.postList.loading = false;
+        }),
+      );
       throw err;
     }
-  },
-  loadMorePostList: async (abortController) => {
-    const postList = get().postList;
-
-    if (postList.loading) {
-      throw new Error('Media list is already loading');
-    }
-    if (!postList.cursor) {
-      throw new Error('No more data');
-    }
-
-    const userId = get().userInfo.data?.id;
-
-    if (!userId) {
-      throw new Error('No userId');
-    }
-
-    set({
-      postList: {
-        ...postList,
-        loading: true,
-      },
-    });
-
-    const { twitterPosts, cursor: nextCursor } = await getUserMedias(
-      userId,
-      postList.cursor,
-    );
-
-    if (abortController) {
-      abortController.signal.throwIfAborted();
-    }
-
-    set({
-      postList: {
-        loading: false,
-        cursor: nextCursor,
-        list: postList.list.concat(twitterPosts),
-      },
-    });
   },
 }));

@@ -3,7 +3,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import dayjs from 'dayjs';
 import * as R from 'ramda';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import MediaType from '../../enums/MediaType';
 import { TwitterMedia } from '../../interfaces/TwitterMedia';
 import { TwitterPost } from '../../interfaces/TwitterPost';
@@ -14,13 +14,10 @@ import { InfiniteScroll } from '../InfiniteScroll';
 import { GridViewItemAction, GridViewItemActions } from './GridViewItemActions';
 
 export const PostListGridView: React.FC = () => {
-  const { userInfo, loadMorePostList, postList } = useHomepageStore(
-    (state) => ({
-      loadMorePostList: state.loadMorePostList,
-      postList: state.postList,
-      userInfo: state.userInfo,
-    }),
-  );
+  const { userInfo, postList } = useHomepageStore((state) => ({
+    postList: state.postList,
+    userInfo: state.userInfo,
+  }));
   const createDownloadTask = useDownloadStore(
     (state) => state.createDownloadTask,
   );
@@ -37,21 +34,30 @@ export const PostListGridView: React.FC = () => {
           )(postItem),
         ),
         R.flatten,
-      )(postList.list),
+      )(postList.list || []),
     [postList.list],
   );
 
+  const requestFn = useCallback(async () => {
+    let state = useHomepageStore.getState();
+    if (!state.postList.list) {
+      await state.loadPostList();
+    } else {
+      await state.loadMorePostList();
+    }
+
+    state = useHomepageStore.getState();
+    return {
+      hasMore: !!state.postList.cursor,
+    };
+  }, []);
+
   return (
     <InfiniteScroll
-      onLoadMore={() => {
-        if (postList.loading || userInfo.loading) {
-          return;
-        }
-        loadMorePostList();
-      }}
+      requestFn={requestFn}
       className="overflow-y-auto pb-10 overflow-hidden h-[inherit]"
     >
-      {postList.loading ? (
+      {postList.loading && !postList.list ? (
         <div role="status">
           <LoadingOutlined
             className="text-ant-color-primary mr-2"
@@ -75,7 +81,7 @@ export const PostListGridView: React.FC = () => {
             : undefined;
 
           async function commonDownload() {
-            const post = postList.list.find(
+            const post = postList.list!.find(
               (post) => post.id === media.postId,
             )!;
             try {
