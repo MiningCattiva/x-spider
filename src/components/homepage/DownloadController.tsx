@@ -16,11 +16,10 @@ import MediaType from '../../enums/MediaType';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 
 export const DownloadController: React.FC = () => {
-  const { filter, setFilter, user, loadPostList } = useHomepageStore((s) => ({
+  const { filter, setFilter, user } = useHomepageStore((s) => ({
     filter: s.filter,
     setFilter: s.setFilter,
     user: s.userInfo.data,
-    loadPostList: s.loadPostList,
   }));
   const { createCreationTask } = useDownloadStore((s) => ({
     createCreationTask: s.createCreationTask,
@@ -115,13 +114,6 @@ export const DownloadController: React.FC = () => {
               <QuestionCircleOutlined />
             </Tooltip>
           </Space>
-        </Button>
-        <Button
-          onClick={() => {
-            loadPostList();
-          }}
-        >
-          刷新列表
         </Button>
       </section>
     </section>
