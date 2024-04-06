@@ -147,7 +147,7 @@ function App() {
             <ul className="mt-8 flex flex-wrap justify-center">
               {sponsors.list.map((item: any) => (
                 <li key={item.id} className='flex items-center mb-4 mx-2'>
-                  <img src={item.avatar} className="w-6 rounded-full" />
+                  <img src={item.avatar} className="w-6 h-6 rounded-full" />
                   <span className='ml-1'>{item.name}</span>
                 </li>
               ))}
