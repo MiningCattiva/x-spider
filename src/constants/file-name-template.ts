@@ -100,6 +100,10 @@ export const REPLACER_MAP: Record<
         data.post.medias!.findIndex((media) => media.id === data.media.id) + 1
       ).toString(),
   },
+  MEDIA_TYPE: {
+    desc: '媒体类型',
+    replacer: (data) => data.media.type,
+  },
   EXT: {
     desc: '扩展名',
     replacer: R.pipe(
