@@ -46,10 +46,10 @@ jobs:
         run: 'pnpm version prerelease -m "chore: Auto release %s"'
       - name: Build
         run: pnpm tauri build
-      - name: Push
-        run: |
-          git push
-          git push --tags
+      - name: Push commits
+        run: git push
+      - name: Push tags
+        run: git push --tags
       - name: Release
         shell: bash
         env:
