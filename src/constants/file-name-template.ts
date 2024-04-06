@@ -115,7 +115,7 @@ export const REPLACER_MAP: Record<
       {
         name: 't',
         desc: '截断长度',
-        default: '32',
+        default: '16',
       },
     ],
     replacer: (data, params) => {
