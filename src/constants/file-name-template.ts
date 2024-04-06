@@ -25,7 +25,8 @@ export const EXAMPLE_POST: Required<TwitterPost> = {
   bookmarked: false,
   favoriteCount: 228,
   favorited: false,
-  fullText: 'This is test post text',
+  fullText:
+    '这里是推文内容,这里是推文内容，这里是推文内容，这里是推文内容，这里是推文内容，这里是推文内容。',
   lang: 'ja',
   possiblySensitive: false,
   replyCount: 21,
@@ -56,7 +57,15 @@ export const REPLACER_MAP: Record<
   string,
   {
     desc: string;
-    replacer: (data: FileNameTemplateData) => string | undefined;
+    params?: {
+      name: string;
+      desc: string;
+      default: string;
+    }[];
+    replacer: (
+      data: FileNameTemplateData,
+      params: Record<string, string>,
+    ) => string | undefined;
   }
 > = {
   POST_ID: {
@@ -99,6 +108,21 @@ export const REPLACER_MAP: Record<
       (
         data.post.medias!.findIndex((media) => media.id === data.media.id) + 1
       ).toString(),
+  },
+  CONTENT: {
+    desc: '推文内容',
+    params: [
+      {
+        name: 't',
+        desc: '截断长度',
+        default: '32',
+      },
+    ],
+    replacer: (data, params) => {
+      const paramTrim = Number(params.t);
+      const trimLen = Number.isNaN(paramTrim) ? 32 : Math.floor(paramTrim);
+      return data.post.fullText ? data.post.fullText.slice(0, trimLen) : '';
+    },
   },
   MEDIA_TYPE: {
     desc: '媒体类型',

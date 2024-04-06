@@ -10,9 +10,25 @@ export function resolveVariables(
   return R.pipe(
     R.toPairs,
     R.reduce((acc, elem: any) => {
-      const regex = new RegExp(`%${elem[0]}%`, 'gi');
-      const s = filenamify(String(elem[1].replacer(data)));
-      return R.replace(regex, s)(acc);
+      return acc.replace(
+        new RegExp(`%${elem[0]}((?:,[a-z]=.+?)+)?%`, 'gi'),
+        (_str, paramsString: string) => {
+          const params = R.ifElse(
+            R.isNotNil,
+            R.pipe(
+              // @ts-ignore
+              R.slice(1, Infinity),
+              R.split(','),
+              R.map(R.split('=')),
+              R.fromPairs,
+            ),
+            R.always({}),
+            // @ts-ignore
+          )(paramsString);
+          const s = filenamify(String(elem[1].replacer(data, params)));
+          return s;
+        },
+      );
     }, templateText),
   )(REPLACER_MAP);
 }
