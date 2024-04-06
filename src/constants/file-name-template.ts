@@ -1,4 +1,3 @@
-import dayjs, { Dayjs } from 'dayjs';
 import { TwitterMedia } from '../interfaces/TwitterMedia';
 import { TwitterPost } from '../interfaces/TwitterPost';
 import { TwitterUser } from '../interfaces/TwitterUser';
@@ -6,6 +5,7 @@ import * as R from 'ramda';
 import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
 import MediaType from '../enums/MediaType';
 import { getDownloadUrl } from '../twitter/utils';
+import dayjs from 'dayjs';
 
 export const EXAMPLE_USER: Required<TwitterUser> = {
   avatar:
@@ -73,10 +73,20 @@ export const REPLACER_MAP: Record<
     replacer: R.path(['post', 'id']),
   },
   POST_TIME: {
-    desc: '推文发布时间',
-    replacer: R.pipe(R.path(['post', 'createdAt']), (ts?: Dayjs) =>
-      ts!.format('YYYY-MM-DD HH-mm-ss'),
-    ),
+    desc: '推文发布日期',
+    replacer: (data, params) => {
+      const dateOnly = params.d ? params.d === '1' : false;
+      return data.post.createdAt.format(
+        dateOnly ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH-mm-ss',
+      );
+    },
+    params: [
+      {
+        name: 'd',
+        desc: '仅日期（0 或 1）',
+        default: '0',
+      },
+    ],
   },
   USER_ID: {
     desc: '用户 ID',
