@@ -26,8 +26,14 @@ export const PostListGridView: React.FC = () => {
     () =>
       R.pipe(
         R.map<TwitterPost, (TwitterMedia & { postId: string })[]>((postItem) =>
-          R.pipe(
+          R.pipe<
+            [TwitterPost],
+            TwitterMedia[] | undefined,
+            TwitterMedia[],
+            (TwitterMedia & { postId: string })[]
+          >(
             R.prop('medias'),
+            R.defaultTo([]),
             R.map<TwitterMedia, TwitterMedia & { postId: string }>(
               R.assoc('postId', postItem.id),
             ),
