@@ -40,7 +40,7 @@ export const DownloadController: React.FC = () => {
       createCreationTask(user, filter);
       message.success('已成功创建下载任务，请到下载管理页查看');
     } catch (err: any) {
-      console.error(err);
+      log.error(err);
       message.error('创建下载任务失败');
     }
   };

@@ -56,7 +56,7 @@ async function prepareDownloadTask({
       resolveVariables(settings.download.dirTemplate, templateData),
     );
   } catch (err: any) {
-    console.error({ err });
+    log.error({ err });
     throw new Error('保存路径解析失败');
   }
 
@@ -126,7 +126,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
     try {
       task = await prepareDownloadTask(params);
     } catch (err: any) {
-      console.error({ params, err });
+      log.error({ params, err });
       throw new Error(`准备下载任务失败：${params.media.url}`);
     }
 
@@ -137,7 +137,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
       });
       task.gid = gid;
     } catch (err: any) {
-      console.error({ params, err });
+      log.error({ params, err });
       throw new Error(`Aria2 创建任务失败：${err.message}`);
     }
 
@@ -145,7 +145,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
       const status = await aria2.invoke('aria2.tellStatus', task.gid);
       task.status = status.status;
     } catch (err: any) {
-      console.error({ params, err });
+      log.error({ params, err });
       throw new Error(`Aria2 获取任务状态失败：${task.gid}`);
       return;
     }
@@ -251,7 +251,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
   },
   removeDownloadTask: async (gid) => {
     aria2.invoke('aria2.remove', gid).catch((err) => {
-      console.error({ gid, err });
+      log.error({ gid, err });
     });
     set({
       downloadTasks: R.filter((v: DownloadTask) => v.gid !== gid)(
@@ -268,7 +268,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
         })),
       )
       .catch((err) => {
-        console.error({ gids, err });
+        log.error({ gids, err });
       });
     set({
       downloadTasks: R.filter((v: DownloadTask) => !gids.includes(v.gid))(
@@ -370,6 +370,7 @@ aria2.onDownloadStart.listen(onAria2StatusChanged);
 aria2.onDownloadStop.listen(onAria2StatusChanged);
 
 async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
+  log.info('Run creation task', task);
   const { filter, user } = task;
 
   const { batchCreateDownloadTask, updateCreationTask } =
@@ -388,6 +389,7 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
       return;
     }
 
+    log.info('CreationTask fetching', nextCursor);
     const { twitterPosts, cursor } = await getUserMedias(user.id, nextCursor);
     nextCursor = cursor;
 
@@ -398,6 +400,8 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
         (post) => (since ? post.createdAt.isAfter(since) : true),
       ]),
     );
+
+    log.info('FilteredPosts', filteredPosts);
 
     if (filteredPosts.length === 0) break;
 
@@ -412,11 +416,16 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
           },
         ]),
       );
+
+      log.info('FilteredMedias', filteredMedias);
       for (const media of filteredMedias) {
         const task = await prepareDownloadTask({ post, media });
+        log.info('Prepared download task', task);
         const filePath = await path.join(task.dir, task.fileName);
+        log.info('Resolved file path', filePath);
         if (settings.download.sameFileSkip && (await fs.exists(filePath))) {
           skipCount++;
+          log.info('Skip because sameFileSkip', media);
           continue;
         }
         paramsList.push({
@@ -425,6 +434,8 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
         });
       }
     }
+
+    log.info('Params', paramsList);
 
     if (paramsList.length === 0) {
       updateCreationTask({
@@ -443,7 +454,7 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
       skipCount,
     });
 
-    if (abortSignal.aborted) return;
+    if (abortSignal.aborted) break;
   }
 }
 
@@ -470,6 +481,7 @@ async function scheduleCreationTasks() {
   ) as AbortController;
 
   if (abortController.signal.aborted) {
+    log.info('Aborted creation task, remove it', task);
     removeCreationTask(task.id);
     requestIdleCallback(scheduleCreationTasks);
     return;
@@ -481,9 +493,11 @@ async function scheduleCreationTasks() {
   try {
     await runCreationTask(task, abortController.signal);
   } catch (err: any) {
-    console.error(err);
+    log.error(err);
     throw new Error('创建任务失败');
   }
+
+  log.info('Completed creation task, remove it', task);
   removeCreationTask(task.id);
   requestIdleCallback(scheduleCreationTasks);
 }

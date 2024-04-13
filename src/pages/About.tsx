@@ -53,7 +53,7 @@ export const About: React.FC = () => {
                   });
                 }
               } catch (err) {
-                console.error(err);
+                log.error(err);
                 dialog.message('无法获取最新更新，请稍后再试', {
                   title: '获取更新错误',
                 });

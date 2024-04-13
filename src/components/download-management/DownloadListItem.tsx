@@ -48,7 +48,7 @@ export const DownloadListItem: React.FC<DownloadListItemProps> = ({
         await redownloadTask(t.gid);
         message.success('已开始重新下载该任务');
       } catch (err) {
-        console.error(err);
+        log.error(err);
         dialog.message('无法重新下载文件', {
           type: 'error',
         });

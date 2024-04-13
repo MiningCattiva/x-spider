@@ -97,7 +97,7 @@ export const PostListGridView: React.FC = () => {
               });
               message.success('已添加到下载队列');
             } catch (err: any) {
-              console.error(err);
+              log.error(err);
               message.error(`创建下载任务失败：${err?.message}`);
             }
           }

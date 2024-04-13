@@ -34,7 +34,19 @@ async function requestInternal(
   headers: Record<string, string>,
   responseType: string,
 ): Promise<Response> {
-  return invoke('network_fetch', {
+  const reqTs = Date.now();
+  log.info(`REQ_${reqTs}`, method, url, {
+    body,
+    enableProxy,
+    proxyUrl,
+    headers: {
+      ...headers,
+      Cookie: headers.Cookie ? '******' : undefined,
+    },
+    responseType,
+  });
+
+  const res = await invoke<Response>('network_fetch', {
     method,
     url,
     body,
@@ -43,6 +55,10 @@ async function requestInternal(
     headers,
     responseType,
   });
+
+  log.info(`RES_${reqTs}`, res.status, url, res);
+
+  return res;
 }
 
 export async function getSystemProxy(): Promise<string> {

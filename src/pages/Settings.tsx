@@ -6,8 +6,10 @@ import { Item } from '../components/settings/Item';
 import { DownloadOutlined, GlobalOutlined } from '@ant-design/icons';
 import Joi from 'joi';
 import { SavePathSelector } from '../components/settings/SavePathSelector';
-import { Input, Switch } from 'antd';
+import { Button, Input, Switch } from 'antd';
 import { FileNameTemplateInput } from '../components/settings/FileNameTemplateInput';
+import { showInFolder } from '../utils/shell';
+import { path } from '@tauri-apps/api';
 
 export const Settings: React.FC = () => {
   return (
@@ -118,6 +120,21 @@ export const Settings: React.FC = () => {
         >
           <Switch />
         </Item>
+        <Item
+          label="记录日志文件"
+          description="日志文件可能体积较大，建议软件运行出问题需要上报时再开启，开启后请重启软件。"
+          settingKey="writeLogs"
+          valuePropName="checked"
+        >
+          <Switch />
+        </Item>
+        <Button
+          onClick={async () => {
+            await showInFolder(await path.appLogDir());
+          }}
+        >
+          打开日志文件夹
+        </Button>
       </Section>
     </>
   );

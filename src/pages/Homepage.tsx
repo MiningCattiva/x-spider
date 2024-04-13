@@ -42,7 +42,7 @@ export const Homepage: React.FC = () => {
       await loadUser(sn);
       addSearchHistory(sn);
     } catch (err: any) {
-      console.error(err);
+      log.error(err);
       message.error('加载失败，请检查用户 ID 是否正确');
     }
   };

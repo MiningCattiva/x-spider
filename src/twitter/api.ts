@@ -34,7 +34,7 @@ function getCommonHeaders(withCredentials = true): Record<string, string> {
 
 function ensureResponse(response: Response) {
   if (response.status >= 400) {
-    console.error(response);
+    log.error(response);
     throw new Error(`Response error: status=${response.status}`);
   }
 }

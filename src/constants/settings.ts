@@ -16,6 +16,7 @@ export const DEFAULT_SETTINGS: Settings = {
   app: {
     autoCheckUpdate: true,
     acceptPrerelease: false,
+    writeLogs: false,
   },
 };
 

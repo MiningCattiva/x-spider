@@ -78,7 +78,7 @@ class Aria2 {
   }
 
   #onStderr(message: string) {
-    console.error(message);
+    log.error(message);
   }
 
   #onWsMessage(ev: MessageEvent) {
@@ -115,7 +115,7 @@ class Aria2 {
       this.onReady.emit();
     });
     this.#ws.addEventListener('error', (ev) => {
-      console.error('Aria websocket error', ev);
+      log.error('Aria websocket error', ev);
     });
     this.#ws.addEventListener('message', this.#onWsMessage.bind(this));
   }
@@ -163,7 +163,7 @@ class Aria2 {
           const err = new Error(
             `Aria2 调用 ${method} 失败：${data.error.message}`,
           );
-          console.error({ err, method, args });
+          log.error({ err, method, args });
           reject(err);
           return;
         }

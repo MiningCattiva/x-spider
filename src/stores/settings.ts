@@ -26,6 +26,7 @@ export const useSettingsStore = create(
         const store = get();
         const newSettings = R.assocPath([name, key], value)(store) as Settings;
         store.update(newSettings);
+        log.info('UpdateSettings', `${name}.${key}`, value);
       },
     }),
     {

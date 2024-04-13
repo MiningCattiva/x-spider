@@ -11,9 +11,21 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { useTaskNotifications } from './hooks/useTaskNotifications';
 import zhCN from 'antd/locale/zh_CN';
 import { useAutoCheckUpdate } from './hooks/useAutoCheckUpdate';
+import { useMount } from 'ahooks';
+import { useSettingsStore } from './stores/settings';
+import { useAppStateStore } from './stores/app-state';
 
 const AppInternal: React.FC = () => {
   const currentRoute = useRouteStore((state) => state.route);
+
+  useMount(() => {
+    log.info('Settings', useSettingsStore.getState());
+    const appState = useAppStateStore.getState();
+    log.info('AppStates', {
+      ...appState,
+      cookieString: appState.cookieString ? '******' : '[empty]',
+    });
+  });
 
   useAutoCheckUpdate();
 

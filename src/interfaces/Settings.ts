@@ -30,6 +30,7 @@ export interface Settings_V2 {
   app: {
     autoCheckUpdate: boolean;
     acceptPrerelease: boolean;
+    writeLogs: boolean;
   };
 }
 
