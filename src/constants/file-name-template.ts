@@ -6,6 +6,7 @@ import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
 import MediaType from '../enums/MediaType';
 import { getDownloadUrl } from '../twitter/utils';
 import dayjs from 'dayjs';
+import { unicodeSubstring } from '../utils/unicode-substring';
 
 export const EXAMPLE_USER: Required<TwitterUser> = {
   avatar:
@@ -131,7 +132,9 @@ export const REPLACER_MAP: Record<
     replacer: (data, params) => {
       const paramTrim = Number(params.t);
       const trimLen = Number.isNaN(paramTrim) ? 32 : Math.floor(paramTrim);
-      return data.post.fullText ? data.post.fullText.slice(0, trimLen) : '';
+      return data.post.fullText
+        ? unicodeSubstring(data.post.fullText, 0, trimLen)
+        : '';
     },
   },
   MEDIA_TYPE: {
