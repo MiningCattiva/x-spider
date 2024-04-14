@@ -109,8 +109,6 @@ const logger: Logger = {
 
 window.log = logger;
 
-log.info(`LogFilePath: ${await logFilePath}`);
-
 window.addEventListener('error', (ev) => {
   log.error('WindowError', {
     error: ev.error,
