@@ -50,10 +50,11 @@ async function prepareDownloadTask({
     media,
     post,
   };
-  const dir = await path.join(
-    settings.download.saveDirBase,
-    resolveVariables(settings.download.dirTemplate, templateData),
-  );
+  const resolvedDirName = settings.download.dirTemplate
+    ? resolveVariables(settings.download.dirTemplate, templateData)
+    : '';
+  log.info('resolved dirName', resolvedDirName);
+  const dir = await path.join(settings.download.saveDirBase, resolvedDirName);
   log.info('resolved dir', dir);
 
   const fileName = resolveVariables(
