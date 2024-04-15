@@ -15,7 +15,7 @@ export function useTaskNotifications() {
         .downloadTasks.find((task) => task.gid === gid);
       if (!task) return;
       const msg = '任务下载失败';
-      const desc = `${task.fileName}\n${task.error}`;
+      const desc = `${task.fileName}\n${task.error || '未知原因'}`;
       antNotification.error({
         message: msg,
         description: desc,

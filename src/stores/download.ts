@@ -14,6 +14,7 @@ import { useSettingsStore } from './settings';
 import { getDownloadUrl } from '../twitter/utils';
 import { resolveVariables } from '../utils/file-name-template';
 import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
+import dayjs from 'dayjs';
 
 export interface CreateDownloadTaskParams {
   post: TwitterPost;
@@ -380,11 +381,16 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
   let completeCount = 0;
   let skipCount = 0;
 
-  const since = filter.dateRange?.[0];
-  const until = filter.dateRange?.[1];
+  let now = dayjs();
+  const since = filter.dateRange?.[0] || dayjs.unix(0);
+  const until = filter.dateRange?.[1] || now.clone();
   let nextCursor: string | undefined | null = undefined;
 
-  while (nextCursor !== null) {
+  const getMediaCounts = R.reduce((acc: number, elem: TwitterPost) => {
+    return acc + (elem.medias?.length || 0);
+  }, 0);
+
+  while (nextCursor !== null && now.isAfter(since)) {
     if (abortSignal.aborted) {
       return;
     }
@@ -392,7 +398,7 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
     log.info('CreationTask fetching', nextCursor);
     const { twitterPosts, cursor } = await getUserMedias(user.id, nextCursor);
     nextCursor = cursor;
-
+    now = R.last(twitterPosts)!.createdAt || now;
     const filteredPosts = twitterPosts.filter(
       R.allPass([
         (post) => (post.medias ? post.medias.length >= 0 : false),
@@ -401,9 +407,19 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
       ]),
     );
 
+    const filteredCount =
+      getMediaCounts(twitterPosts) - getMediaCounts(filteredPosts);
+    skipCount += filteredCount;
     log.info('FilteredPosts', filteredPosts);
 
-    if (filteredPosts.length === 0) break;
+    if (filteredPosts.length === 0) {
+      updateCreationTask({
+        ...task,
+        completeCount,
+        skipCount,
+      });
+      continue;
+    }
 
     const paramsList: CreateDownloadTaskParams[] = [];
 
