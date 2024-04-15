@@ -103,15 +103,15 @@ export const REPLACER_MAP: Record<
   },
   MEDIA_ID: {
     desc: '资源 ID',
-    replacer: R.path(['post', 'media', 'id']),
+    replacer: R.path(['media', 'id']),
   },
   MEDIA_WIDTH: {
     desc: '资源宽度',
-    replacer: R.path(['post', 'media', 'width']),
+    replacer: R.path(['media', 'width']),
   },
   MEDIA_HEIGHT: {
     desc: '资源高度',
-    replacer: R.path(['post', 'media', 'height']),
+    replacer: R.path(['media', 'height']),
   },
   MEDIA_INDEX: {
     desc: '资源索引',
