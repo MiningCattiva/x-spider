@@ -77,7 +77,18 @@ const writeLine = (() => {
 
 async function logFile(level: string, time: Dayjs, ...messages: any[]) {
   const fmtTime = time.toISOString();
-  const msg = `${fmtTime} [${level}] ${messages.map((m) => JSON.stringify(m)).join(' ')}`;
+  const msg = `${fmtTime} [${level}] ${messages
+    .map((m) => {
+      if (m instanceof Error) {
+        return JSON.stringify({
+          type: 'Error',
+          message: m.message,
+          name: m.name,
+        });
+      }
+      return JSON.stringify(m);
+    })
+    .join(' ')}`;
   await writeLine(msg);
 }
 
