@@ -8,6 +8,7 @@ async function poll() {
   const newValue = await getSystemProxy();
   if (value !== newValue) {
     value = newValue;
+    log.info('System proxy changed', newValue);
     systemProxyChangedEvent.emit(newValue);
   }
   setTimeout(poll, 1000);

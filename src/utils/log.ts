@@ -63,9 +63,13 @@ const writeLine = (() => {
 
     clearTimeout(timeoutId);
     timeoutId = setTimeout(async () => {
-      await fs.writeTextFile(await logFilePath, writeBuffers.join('\n'), {
-        append: true,
-      });
+      await fs.writeTextFile(
+        await logFilePath,
+        writeBuffers.join('\n') + '\n',
+        {
+          append: true,
+        },
+      );
       writeBuffers.length = 0;
     }, 500);
   };

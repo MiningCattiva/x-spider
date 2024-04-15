@@ -45,26 +45,23 @@ async function prepareDownloadTask({
 }: CreateDownloadTaskParams): Promise<DownloadTask> {
   const settings = useSettingsStore.getState();
   const downloadUrl = getDownloadUrl(media);
+  log.info('downloadUrl', downloadUrl);
   const templateData: FileNameTemplateData = {
     media,
     post,
   };
-  let dir: string;
-
-  try {
-    dir = await path.join(
-      settings.download.saveDirBase,
-      resolveVariables(settings.download.dirTemplate, templateData),
-    );
-  } catch (err: any) {
-    log.error({ err });
-    throw new Error('保存路径解析失败');
-  }
+  const dir = await path.join(
+    settings.download.saveDirBase,
+    resolveVariables(settings.download.dirTemplate, templateData),
+  );
+  log.info('resolved dir', dir);
 
   const fileName = resolveVariables(
     settings.download.fileNameTemplate,
     templateData,
   );
+
+  log.info('resolved fileName', fileName);
 
   const task: DownloadTask = {
     gid: '',
@@ -123,33 +120,16 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
 
   downloadTasks: [],
   createDownloadTask: async (params) => {
-    let task: DownloadTask;
-    try {
-      task = await prepareDownloadTask(params);
-    } catch (err: any) {
-      log.error({ params, err });
-      throw new Error(`准备下载任务失败：${params.media.url}`);
-    }
+    const task = await prepareDownloadTask(params);
 
-    try {
-      const gid = await aria2.invoke('aria2.addUri', [task.downloadUrl], {
-        dir: task.dir,
-        out: task.fileName,
-      });
-      task.gid = gid;
-    } catch (err: any) {
-      log.error({ params, err });
-      throw new Error(`Aria2 创建任务失败：${err.message}`);
-    }
+    const gid = await aria2.invoke('aria2.addUri', [task.downloadUrl], {
+      dir: task.dir,
+      out: task.fileName,
+    });
+    task.gid = gid;
 
-    try {
-      const status = await aria2.invoke('aria2.tellStatus', task.gid);
-      task.status = status.status;
-    } catch (err: any) {
-      log.error({ params, err });
-      throw new Error(`Aria2 获取任务状态失败：${task.gid}`);
-      return;
-    }
+    const status = await aria2.invoke('aria2.tellStatus', task.gid);
+    task.status = status.status;
 
     set({
       downloadTasks: get().downloadTasks.concat(task),
@@ -509,7 +489,7 @@ async function scheduleCreationTasks() {
   try {
     await runCreationTask(task, abortController.signal);
   } catch (err: any) {
-    log.error(err);
+    log.error('runCreationTaskError', err);
     throw new Error('创建任务失败');
   }
 

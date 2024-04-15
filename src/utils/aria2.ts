@@ -24,10 +24,11 @@ class Aria2 {
   onDownloadError = new EventEmitter<string>();
 
   constructor() {
-    this.#initialize();
+    setTimeout(() => this.#initialize(), 0);
   }
 
   async #initialize() {
+    log.info('Aria2c starting');
     this.#command = Command.sidecar('binaries/aria2c', [
       '--enable-rpc',
       '--rpc-secret',
@@ -49,8 +50,10 @@ class Aria2 {
   }
 
   async #updateProxy() {
+    const resolved = await this.#resolveProxyValue();
+    log.info('Aria2c proxy value', resolved);
     await this.invoke('aria2.changeGlobalOption', {
-      'all-proxy': await this.#resolveProxyValue(),
+      'all-proxy': resolved,
     });
   }
 
@@ -73,17 +76,19 @@ class Aria2 {
 
   #onStdout(message: string) {
     if (!this.ready && message.includes('IPv4 RPC: listening on TCP port')) {
+      log.info('Aria2c start success');
       this.#connectWs();
     }
   }
 
   #onStderr(message: string) {
-    log.error(message);
+    log.error(`Aria2c start fail: ${message}`);
   }
 
   #onWsMessage(ev: MessageEvent) {
     const data = JSON.parse(ev.data);
     if (data.id) return;
+    log.info('Aria2c received event:', data);
 
     const gid = () => data.params[0].gid;
 
@@ -111,11 +116,12 @@ class Aria2 {
   #connectWs() {
     this.#ws = new WebSocket(`ws://127.0.0.1:${this.#port}/jsonrpc`);
     this.#ws.addEventListener('open', () => {
+      log.info('Aria2c ws connected');
       this.#ready = true;
       this.onReady.emit();
     });
     this.#ws.addEventListener('error', (ev) => {
-      log.error('Aria websocket error', ev);
+      log.error('Aria2c websocket error', ev);
     });
     this.#ws.addEventListener('message', this.#onWsMessage.bind(this));
   }
@@ -143,22 +149,23 @@ class Aria2 {
     await this.waitForReady();
     return new Promise((resolve, reject) => {
       const id = this.#invokeId++;
-      this.#ws!.send(
-        JSON.stringify({
-          jsonrpc: '2.0',
-          id: id.toString(),
-          method,
-          params:
-            method === 'system.multicall'
-              ? args
-              : [`token:${this.#secret}`, ...args],
-        }),
-      );
+      const payload = {
+        jsonrpc: '2.0',
+        id: id.toString(),
+        method,
+        params:
+          method === 'system.multicall'
+            ? args
+            : [`token:${this.#secret}`, ...args],
+      };
+      log.info(`Aria2c REQ id=${id}`, payload);
+      this.#ws!.send(JSON.stringify(payload));
 
       const cb = (ev: MessageEvent) => {
         const data = JSON.parse(ev.data);
         if (data.id !== id.toString()) return;
         this.#ws!.removeEventListener('message', cb);
+        log.info(`Aria2c RES id=${id}`, data);
         if (data.error) {
           const err = new Error(
             `Aria2 调用 ${method} 失败：${data.error.message}`,
@@ -167,6 +174,7 @@ class Aria2 {
           reject(err);
           return;
         }
+
         resolve(data.result);
       };
 
