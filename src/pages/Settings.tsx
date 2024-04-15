@@ -39,6 +39,8 @@ export const Settings: React.FC = () => {
               .message(
                 '文件夹名有误，请检查文件夹名是否正确，文件夹名不能包含以下字符：? * / \\ < > : " |',
               )
+              .$.pattern(/^\s+$/, { invert: true })
+              .message('文件夹名不能为纯空格！')
               .allow('')
               .validate(value).error?.message;
           }}
@@ -60,6 +62,8 @@ export const Settings: React.FC = () => {
               .message(
                 '文件名有误，请检查文件名是否正确，文件名不能包含以下字符：? * / \\ < > : " |',
               )
+              .$.pattern(/^\s+$/, { invert: true })
+              .message('文件名不能为纯空格！')
               .messages({
                 'string.empty': '请填写保存文件名模板',
               })
