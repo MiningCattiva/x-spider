@@ -15,6 +15,7 @@ import { getDownloadUrl } from '../twitter/utils';
 import { resolveVariables } from '../utils/file-name-template';
 import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
 import dayjs from 'dayjs';
+import { message } from 'antd';
 
 export interface CreateDownloadTaskParams {
   post: TwitterPost;
@@ -489,14 +490,14 @@ async function scheduleCreationTasks() {
 
   try {
     await runCreationTask(task, abortController.signal);
+    log.info('Completed creation task, remove it', task);
+    removeCreationTask(task.id);
   } catch (err: any) {
     log.error('runCreationTaskError', err);
     removeCreationTask(task.id);
-    throw new Error('创建任务失败');
+    message.error(`爬虫任务运行失败：${err || err?.message || '未知原因'}`);
   }
 
-  log.info('Completed creation task, remove it', task);
-  removeCreationTask(task.id);
   requestIdleCallback(scheduleCreationTasks);
 }
 
