@@ -15,7 +15,7 @@ import { getDownloadUrl } from '../twitter/utils';
 import { resolveVariables } from '../utils/file-name-template';
 import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
 import dayjs from 'dayjs';
-import { message, notification as antNotification } from 'antd';
+import { notification as antNotification } from 'antd';
 
 export interface CreateDownloadTaskParams {
   post: TwitterPost;
@@ -541,7 +541,14 @@ async function scheduleCreationTasks() {
   } catch (err: any) {
     log.error('runCreationTaskError', err);
     removeCreationTask(task.id);
-    message.error(`爬虫任务运行失败：${err || err?.message || '未知原因'}`);
+    const reason = typeof err === 'string' ? err : err?.message || '未知原因';
+    notification.sendNotification({
+      title: '爬虫任务运行失败',
+      body: reason,
+    });
+    antNotification.error({
+      message: `爬虫任务运行失败：${reason}`,
+    });
   }
 
   requestIdleCallback(scheduleCreationTasks);
