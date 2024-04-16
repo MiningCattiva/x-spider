@@ -491,6 +491,7 @@ async function scheduleCreationTasks() {
     await runCreationTask(task, abortController.signal);
   } catch (err: any) {
     log.error('runCreationTaskError', err);
+    removeCreationTask(task.id);
     throw new Error('创建任务失败');
   }
 
