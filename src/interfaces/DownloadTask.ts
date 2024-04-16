@@ -14,4 +14,5 @@ export interface DownloadTask {
   error?: string;
   updatedAt: number;
   downloadUrl: string;
+  ariaRetryCountRemains: number;
 }

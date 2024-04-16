@@ -77,6 +77,7 @@ async function prepareDownloadTask({
     dir,
     updatedAt: Date.now(),
     downloadUrl,
+    ariaRetryCountRemains: 5,
   };
 
   return task;
@@ -234,11 +235,15 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
   },
   removeDownloadTask: async (gid) => {
     aria2.invoke('aria2.remove', gid).catch((err) => {
-      log.error({ gid, err });
+      log.warn('Remove aria2 task failed', { gid, err });
     });
+    const state = get();
     set({
       downloadTasks: R.filter((v: DownloadTask) => v.gid !== gid)(
-        get().downloadTasks,
+        state.downloadTasks,
+      ),
+      autoSyncTaskIds: R.filter((v: string) => v !== gid)(
+        state.autoSyncTaskIds,
       ),
     });
   },
@@ -287,32 +292,59 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
     );
   },
   syncDownloadTaskStatus: async (gid) => {
-    const { downloadTasks, updateDownloadTask } = get();
+    const { downloadTasks, updateDownloadTask, removeDownloadTask } = get();
     const index = downloadTasks.findIndex((v) => v.gid === gid);
     if (index === -1) {
       return;
     }
+    const task = downloadTasks[index];
     const now = Date.now();
     const status = await aria2.invoke('aria2.tellStatus', gid);
-    const newTask = await mergeAriaStatusToDownloadTask(
-      status,
-      downloadTasks[index],
-    );
 
-    if (newTask.error) {
-      const msg = '任务下载失败';
-      const desc = `${newTask.fileName}\n${newTask.error || '未知原因'}`;
-      antNotification.error({
-        message: msg,
-        description: desc,
-      });
-      notification.sendNotification({
-        title: msg,
-        body: desc,
-      });
+    if (status.status === 'error') {
+      if (task.ariaRetryCountRemains > 0) {
+        log.warn(
+          `Task download failed, retry it. RetryCountRemains: ${task.ariaRetryCountRemains}`,
+          task,
+        );
+        removeDownloadTask(task.gid);
+
+        const newTask = await prepareDownloadTask({
+          post: task.post,
+          media: task.media,
+        });
+        newTask.ariaRetryCountRemains = task.ariaRetryCountRemains - 1;
+
+        const gid = await aria2.invoke('aria2.addUri', [task.downloadUrl], {
+          dir: newTask.dir,
+          out: newTask.fileName,
+        });
+        newTask.gid = gid;
+
+        const status = await aria2.invoke('aria2.tellStatus', task.gid);
+        newTask.status = status.status;
+
+        set({
+          downloadTasks: get().downloadTasks.concat(newTask),
+        });
+      } else {
+        const newTask = await mergeAriaStatusToDownloadTask(status, task);
+        const msg = '任务下载失败';
+        const desc = `${newTask.fileName}\n${newTask.error || '未知原因'}`;
+        log.error('Task download failed', newTask);
+        antNotification.error({
+          message: msg,
+          description: desc,
+        });
+        notification.sendNotification({
+          title: msg,
+          body: desc,
+        });
+      }
+    } else {
+      const newTask = await mergeAriaStatusToDownloadTask(status, task);
+      updateDownloadTask(newTask, now);
     }
-
-    updateDownloadTask(newTask, now);
   },
 
   creationTasks: [],
