@@ -52,6 +52,8 @@ export async function request(options: RequestOptions) {
   throw lastErr;
 }
 
+let reqIdGlobal = 0;
+
 async function requestInternal(
   method: string,
   url: string,
@@ -61,8 +63,9 @@ async function requestInternal(
   headers: Record<string, string>,
   responseType: string,
 ): Promise<Response> {
-  const reqTs = Date.now();
-  log.info(`REQ_${reqTs}`, method, url, {
+  const startTs = Date.now();
+  const reqId = reqIdGlobal++;
+  log.info(`REQ_${reqId}`, method, url, {
     body,
     enableProxy,
     proxyUrl,
@@ -83,7 +86,8 @@ async function requestInternal(
     responseType,
   });
 
-  log.info(`RES_${reqTs}`, res.status, url, res);
+  const endTs = Date.now() - startTs;
+  log.info(`RES_${reqId}(+${endTs}ms)`, res.status, url, res);
 
   return res;
 }
