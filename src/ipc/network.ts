@@ -5,8 +5,8 @@ import * as R from 'ramda';
 import { useSettingsStore } from '../stores/settings';
 import { delay } from '../utils';
 
-const MAX_RETRY_COUNT = 7;
-const MAX_RETRY_DELAY = 10000;
+const MAX_RETRY_COUNT = 16;
+const MAX_RETRY_DELAY = 16000;
 
 export async function request(options: RequestOptions) {
   const url = new URL(options.url);
