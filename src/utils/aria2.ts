@@ -1,8 +1,8 @@
 import { Child, Command } from '@tauri-apps/api/shell';
-import { EventEmitter } from './event';
-import { useSettingsStore } from '../stores/settings';
-import { getSystemProxy } from '../ipc/network';
 import { systemProxyChangedEvent } from '../events/system-proxy';
+import { getSystemProxy } from '../ipc/network';
+import { useSettingsStore } from '../stores/settings';
+import { EventEmitter } from './event';
 
 class Aria2 {
   #ready = false;
@@ -15,6 +15,7 @@ class Aria2 {
   #command?: Command;
   #child?: Child;
   #invokeId = 0;
+  #globalOptions: Record<string, string> = {};
 
   onReady = new EventEmitter();
   onDownloadStart = new EventEmitter<string>();
@@ -49,12 +50,16 @@ class Aria2 {
     systemProxyChangedEvent.listen(this.#onSystemProxyChanged.bind(this));
   }
 
+  async #updateGlobalOptions() {
+    log.info('Aria2c updateGlobalOptions', this.#globalOptions);
+    await this.invoke('aria2.changeGlobalOption', this.#globalOptions);
+  }
+
   async #updateProxy() {
     const resolved = await this.#resolveProxyValue();
     log.info('Aria2c proxy value', resolved);
-    await this.invoke('aria2.changeGlobalOption', {
-      'all-proxy': resolved,
-    });
+    this.#globalOptions['all-proxy'] = resolved;
+    await this.#updateGlobalOptions();
   }
 
   async #resolveProxyValue() {
