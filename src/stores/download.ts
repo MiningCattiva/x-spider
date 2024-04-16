@@ -1,4 +1,4 @@
-import { fs, path } from '@tauri-apps/api';
+import { fs, notification, path } from '@tauri-apps/api';
 import { nanoid } from 'nanoid';
 import * as R from 'ramda';
 import { create } from 'zustand';
@@ -15,7 +15,7 @@ import { getDownloadUrl } from '../twitter/utils';
 import { resolveVariables } from '../utils/file-name-template';
 import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
 import dayjs from 'dayjs';
-import { message } from 'antd';
+import { message, notification as antNotification } from 'antd';
 
 export interface CreateDownloadTaskParams {
   post: TwitterPost;
@@ -298,6 +298,20 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
       status,
       downloadTasks[index],
     );
+
+    if (newTask.error) {
+      const msg = '任务下载失败';
+      const desc = `${newTask.fileName}\n${newTask.error || '未知原因'}`;
+      antNotification.error({
+        message: msg,
+        description: desc,
+      });
+      notification.sendNotification({
+        title: msg,
+        body: desc,
+      });
+    }
+
     updateDownloadTask(newTask, now);
   },
 
