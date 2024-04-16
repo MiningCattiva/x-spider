@@ -5,6 +5,7 @@ import { TwitterPost } from '../interfaces/TwitterPost';
 import { DownloadFilter } from '../interfaces/DownloadFilter';
 import MediaType from '../enums/MediaType';
 import { produce } from 'immer';
+import { message } from 'antd';
 
 export interface PostListRequest {
   list?: TwitterPost[];
@@ -123,18 +124,31 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
       },
     });
 
-    const { cursor, twitterPosts } = await getUserMedias(userInfo.id);
+    try {
+      const { cursor, twitterPosts } = await getUserMedias(userInfo.id);
 
-    if (loadPostListAbortController.signal.aborted) {
-      return;
+      if (loadPostListAbortController.signal.aborted) {
+        return;
+      }
+
+      set({
+        postList: {
+          list: twitterPosts,
+          loading: false,
+          cursor,
+        },
+      });
+    } catch (err: any) {
+      log.error('Failed to load post list', err);
+      message.error(`加载图片列表失败：${err?.message || '未知原因'}`);
+      set({
+        postList: {
+          cursor: null,
+          list: [],
+          loading: false,
+        },
+      });
     }
-    set({
-      postList: {
-        list: twitterPosts,
-        loading: false,
-        cursor,
-      },
-    });
   },
   loadMorePostList: async () => {
     const state = get();

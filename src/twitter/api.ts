@@ -238,6 +238,7 @@ const extractTwitterPosts = (
   return R.pipe(
     pathToInstructions,
     pathToTwitterPostItems,
+    R.filter(R.isNotNil),
     mapTwitterPosts,
   )(data);
 };
@@ -326,6 +327,8 @@ export async function getUserMedias(
       twitterPosts: [],
     };
   }
+
+  log.info('twitterPosts', twitterPosts);
 
   const nextCursor = extractNextCursor(pathToInstructions, resp.body);
 
