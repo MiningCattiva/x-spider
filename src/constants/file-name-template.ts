@@ -6,7 +6,7 @@ import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
 import MediaType from '../enums/MediaType';
 import { getDownloadUrl } from '../twitter/utils';
 import dayjs from 'dayjs';
-import { unicodeSubstring } from '../utils/unicode-substring';
+import { unicodeSubstring } from '../utils/unicode';
 
 export const EXAMPLE_USER: Required<TwitterUser> = {
   avatar:

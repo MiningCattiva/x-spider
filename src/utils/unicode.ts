@@ -2,7 +2,11 @@
  * From: https://github.com/lautis/unicode-substring/blob/master/index.js
  */
 
-function charAt(string: string, index: number) {
+// eslint-disable-next-line no-control-regex
+const filenameReservedRegex = () => /[<>:"/\\|?*\u0000-\u001F]/;
+const windowsReservedNameRegex = () => /^(con|prn|aux|nul|com\d|lpt\d)$/i;
+
+export function unicodeCharAt(string: string, index: number) {
   const first = string.charCodeAt(index);
   let second: number;
   if (first >= 0xd800 && first <= 0xdbff && string.length > index + 1) {
@@ -22,7 +26,7 @@ function slice(string: string, start: number, end: number) {
   const length = string.length;
 
   while (stringIndex < length) {
-    character = charAt(string, stringIndex);
+    character = unicodeCharAt(string, stringIndex);
     if (unicodeIndex >= start && unicodeIndex < end) {
       accumulator += character;
     }
@@ -40,4 +44,30 @@ export function unicodeSubstring(string: string, start: number, end: number) {
   } else {
     return slice(string, end, start);
   }
+}
+
+export function unicodeSplit(str: string) {
+  const arr: string[] = [];
+  let index = 0;
+
+  while (index < str.length) {
+    const char = unicodeCharAt(str, index);
+    arr.push(char);
+    index += char.length;
+  }
+  return arr;
+}
+
+export function unicodeFilenamify(str: string) {
+  if (windowsReservedNameRegex().test(str)) {
+    return str + '!';
+  }
+  return unicodeSplit(str)
+    .map((char) => {
+      if (filenameReservedRegex().test(char)) {
+        return '!';
+      }
+      return char;
+    })
+    .join('');
 }

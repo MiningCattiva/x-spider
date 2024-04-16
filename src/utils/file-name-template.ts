@@ -1,7 +1,7 @@
 import { REPLACER_MAP } from '../constants/file-name-template';
 import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
-import filenamify from 'filenamify';
 import * as R from 'ramda';
+import { unicodeFilenamify } from './unicode';
 
 export function resolveVariables(
   templateText: string,
@@ -25,7 +25,7 @@ export function resolveVariables(
             R.always({}),
             // @ts-ignore
           )(paramsString);
-          const s = filenamify(String(elem[1].replacer(data, params)));
+          const s = unicodeFilenamify(String(elem[1].replacer(data, params)));
           return s;
         },
       );
