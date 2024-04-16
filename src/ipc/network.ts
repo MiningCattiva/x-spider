@@ -6,6 +6,7 @@ import { useSettingsStore } from '../stores/settings';
 import { delay } from '../utils';
 
 const MAX_RETRY_COUNT = 7;
+const MAX_RETRY_DELAY = 10000;
 
 export async function request(options: RequestOptions) {
   const url = new URL(options.url);
@@ -41,6 +42,9 @@ export async function request(options: RequestOptions) {
       await delay(retryDelay);
       remainingRetryCount--;
       retryDelay *= 2;
+      if (retryDelay > MAX_RETRY_DELAY) {
+        retryDelay = MAX_RETRY_DELAY;
+      }
     }
   }
 
