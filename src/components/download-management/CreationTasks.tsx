@@ -1,8 +1,9 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
 import { useDownloadStore } from '../../stores/download';
-import { Avatar, Button } from 'antd';
+import { Avatar, Button, Tooltip } from 'antd';
 import { buildUserUrl } from '../../twitter/url';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 
 export const CreationTasks: React.FC = () => {
   const { creationTasks, removeCreationTask } = useDownloadStore((s) => ({
@@ -36,7 +37,15 @@ export const CreationTasks: React.FC = () => {
             <div className="flex items-center space-x-2 shrink-0">
               <span className="space-x-2">
                 <span>已发送：{t.completeCount}</span>
-                {t.skipCount > 0 && <span>已跳过：{t.skipCount}</span>}
+                {t.skipCount > 0 && (
+                  <span>
+                    已跳过
+                    <Tooltip title="以下几种情况会跳过：1. 已经有相同文件名存在并打开跳过相同文件开关；2. 爬取进程未到指定开始日期。">
+                      <QuestionCircleOutlined className="ml-1 text-ant-color-primary" />
+                    </Tooltip>
+                    ：{t.skipCount}
+                  </span>
+                )}
               </span>
               <Button
                 onClick={async () => {
