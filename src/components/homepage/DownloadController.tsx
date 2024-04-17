@@ -1,19 +1,19 @@
 /* eslint-disable react/prop-types */
-import React from 'react';
-import { useHomepageStore } from '../../stores/homepage';
 import {
   Button,
   Checkbox,
   DatePicker,
   Form,
+  Radio,
   Space,
-  Tooltip,
   message,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useDownloadStore } from '../../stores/download';
+import React from 'react';
 import MediaType from '../../enums/MediaType';
-import { QuestionCircleOutlined } from '@ant-design/icons';
+import { DownloadFilter } from '../../interfaces/DownloadFilter';
+import { useDownloadStore } from '../../stores/download';
+import { useHomepageStore } from '../../stores/homepage';
 
 export const DownloadController: React.FC = () => {
   const { filter, setFilter, user } = useHomepageStore((s) => ({
@@ -48,7 +48,7 @@ export const DownloadController: React.FC = () => {
   return (
     <section className="p-4 bg-white rounded-md mt-3 border-[1px]">
       <h2 className="font-bold mb-4">下载配置</h2>
-      <Form
+      <Form<DownloadFilter>
         layout="inline"
         initialValues={filter}
         onValuesChange={(_, values) => {
@@ -104,15 +104,30 @@ export const DownloadController: React.FC = () => {
             ]}
           />
         </Form.Item>
+        <Form.Item
+          name="source"
+          label="下载源"
+          tooltip="帖子能下载到更早的推文，但爬取速度较慢；媒体可能下载不到更早的推文，但爬取速度更快。"
+        >
+          <Radio.Group
+            options={[
+              {
+                label: '帖子',
+                value: 'tweets',
+              },
+              {
+                label: '媒体',
+                value: 'medias',
+              },
+            ]}
+          />
+        </Form.Item>
       </Form>
       <hr className="my-4" />
       <section className="flex space-x-2">
         <Button type="primary" onClick={onStartDownload}>
           <Space>
             <span>开始下载</span>
-            <Tooltip title="由于推特限制，更早的媒体可能无法下载到。">
-              <QuestionCircleOutlined />
-            </Tooltip>
           </Space>
         </Button>
       </section>

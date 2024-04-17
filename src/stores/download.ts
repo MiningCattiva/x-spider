@@ -9,7 +9,7 @@ import { TwitterMedia } from '../interfaces/TwitterMedia';
 import { TwitterPost } from '../interfaces/TwitterPost';
 import { TwitterUser } from '../interfaces/TwitterUser';
 import { aria2 } from '../utils/aria2';
-import { getUserMedias } from '../twitter/api';
+import { getUserMedias, getUserTweets } from '../twitter/api';
 import { useSettingsStore } from './settings';
 import { getDownloadUrl } from '../twitter/utils';
 import { resolveVariables } from '../utils/file-name-template';
@@ -414,6 +414,8 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
   const until = filter.dateRange?.[1] || now.clone();
   let nextCursor: string | undefined | null = undefined;
 
+  const getListFn = filter.source === 'medias' ? getUserMedias : getUserTweets;
+
   const getMediaCounts = R.reduce((acc: number, elem: TwitterPost) => {
     return acc + (elem.medias?.length || 0);
   }, 0);
@@ -424,9 +426,10 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
     }
 
     log.info('CreationTask fetching', nextCursor);
-    const { twitterPosts, cursor } = await getUserMedias(user.id, nextCursor);
+    const { twitterPosts, cursor } = await getListFn(user.id, nextCursor);
     nextCursor = cursor;
     now = R.last(twitterPosts)?.createdAt || now;
+    log.info('Now', now.format('YYYY-MM-DD'), 'next cursor', nextCursor);
     const filteredPosts = twitterPosts.filter(
       R.allPass([
         (post) => (post.medias ? post.medias.length >= 0 : false),
