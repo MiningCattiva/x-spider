@@ -426,12 +426,18 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
     log.info('CreationTask fetching', nextCursor);
     const { twitterPosts, cursor } = await getUserMedias(user.id, nextCursor);
     nextCursor = cursor;
-    now = R.last(twitterPosts)!.createdAt || now;
+    now = R.last(twitterPosts)?.createdAt || now;
     const filteredPosts = twitterPosts.filter(
       R.allPass([
         (post) => (post.medias ? post.medias.length >= 0 : false),
-        (post) => (until ? post.createdAt.isBefore(until) : true),
-        (post) => (since ? post.createdAt.isAfter(since) : true),
+        (post) => {
+          if (!post.createdAt) return true;
+          return until ? post.createdAt.isBefore(until) : true;
+        },
+        (post) => {
+          if (!post.createdAt) return true;
+          return since ? post.createdAt.isAfter(since) : true;
+        },
       ]),
     );
 

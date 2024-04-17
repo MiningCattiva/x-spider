@@ -5,7 +5,7 @@ import { TwitterUser } from './TwitterUser';
 export interface TwitterPost {
   id: string;
   user: TwitterUser;
-  createdAt: Dayjs;
+  createdAt?: Dayjs;
   fullText?: string;
   tags?: string[];
   views?: number;

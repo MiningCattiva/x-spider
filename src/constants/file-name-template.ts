@@ -76,6 +76,7 @@ export const REPLACER_MAP: Record<
   POST_TIME: {
     desc: '推文发布日期',
     replacer: (data, params) => {
+      if (!data.post.createdAt) return '未知日期';
       const dateOnly = params.d ? params.d === '1' : false;
       return data.post.createdAt.format(
         dateOnly ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH-mm-ss',

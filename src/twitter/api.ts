@@ -173,7 +173,9 @@ const extractTwitterPosts = (
         views: R.isNotNil(item?.views?.count)
           ? Number(item.views.count)
           : undefined,
-        createdAt: dayjs(item.legacy.created_at),
+        createdAt: item.legacy?.created_at
+          ? dayjs(item.legacy?.created_at)
+          : undefined,
         bookmarkCount: item?.legacy?.bookmark_count,
         bookmarked: item?.legacy?.bookmarked,
         favoriteCount: item?.legacy?.favorite_count,
