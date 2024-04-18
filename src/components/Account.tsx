@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { Avatar, Form, Input, Modal, message } from 'antd';
+import { App, Avatar, Form, Input, Modal } from 'antd';
 import React, { useEffect, useState } from 'react';
 import { useAppStateStore } from '../stores/app-state';
 import { getAccountInfo } from '../twitter/api';
@@ -22,6 +22,7 @@ export const Account: React.FC = () => {
   );
   const [loading, setLoading] = useState(false);
   const [form] = useForm();
+  const { message } = App.useApp();
 
   useEffect(() => {
     (async () => {

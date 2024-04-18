@@ -8,7 +8,7 @@ import { DownloadTask } from '../interfaces/DownloadTask';
 import { TwitterMedia } from '../interfaces/TwitterMedia';
 import { TwitterPost } from '../interfaces/TwitterPost';
 import { TwitterUser } from '../interfaces/TwitterUser';
-import { aria2 } from '../utils/aria2';
+import { AriaStatus, aria2 } from '../utils/aria2';
 import { getUserMedias, getUserTweets } from '../twitter/api';
 import { useSettingsStore } from './settings';
 import { getDownloadUrl } from '../twitter/utils';
@@ -16,6 +16,14 @@ import { resolveVariables } from '../utils/file-name-template';
 import { FileNameTemplateData } from '../interfaces/FileNameTemplateData';
 import dayjs from 'dayjs';
 import { notification as antNotification } from 'antd';
+
+let _log: ICategoriedLogger;
+
+function log() {
+  if (_log) return _log;
+  _log = window.log.category('DL');
+  return _log;
+}
 
 export interface CreateDownloadTaskParams {
   post: TwitterPost;
@@ -46,7 +54,7 @@ async function prepareDownloadTask({
 }: CreateDownloadTaskParams): Promise<DownloadTask> {
   const settings = useSettingsStore.getState();
   const downloadUrl = getDownloadUrl(media);
-  log.info('downloadUrl', downloadUrl);
+  log().info('downloadUrl', downloadUrl);
   const templateData: FileNameTemplateData = {
     media,
     post,
@@ -54,20 +62,20 @@ async function prepareDownloadTask({
   const resolvedDirName = settings.download.dirTemplate
     ? resolveVariables(settings.download.dirTemplate, templateData)
     : '';
-  log.info('resolved dirName', resolvedDirName);
+  log().info('resolved dirName', resolvedDirName);
   const dir = await path.join(settings.download.saveDirBase, resolvedDirName);
-  log.info('resolved dir', dir);
+  log().info('resolved dir', dir);
 
   const fileName = resolveVariables(
     settings.download.fileNameTemplate,
     templateData,
   );
 
-  log.info('resolved fileName', fileName);
+  log().info('resolved fileName', fileName);
 
   const task: DownloadTask = {
     gid: '',
-    status: 'waiting',
+    status: AriaStatus.Waiting,
     completeSize: 0,
     totalSize: Infinity,
     fileName,
@@ -131,7 +139,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
     });
     task.gid = gid;
 
-    const status = await aria2.invoke('aria2.tellStatus', task.gid);
+    const status = await aria2.tellStatus(task.gid);
     task.status = status.status;
 
     set({
@@ -202,18 +210,11 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
       )
     ).flat();
 
-    const statusList: any[] = (
-      await aria2.batchInvoke(
-        gids.map((gid) => ({
-          methodName: 'aria2.tellStatus',
-          params: [gid],
-        })),
-      )
-    ).flat();
+    const statusMap = await aria2.tellStatus(gids);
 
     tasks.forEach((task, index) => {
       task.gid = gids[index];
-      task.status = statusList[index].status;
+      task.status = statusMap[task.gid].status;
     });
 
     const newTasks = get().downloadTasks.concat(tasks);
@@ -235,7 +236,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
   },
   removeDownloadTask: async (gid) => {
     aria2.invoke('aria2.remove', gid).catch((err) => {
-      log.warn('Remove aria2 task failed', { gid, err });
+      log().warn('Remove aria2 task failed', { gid, err });
     });
     const state = get();
     set({
@@ -256,7 +257,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
         })),
       )
       .catch((err) => {
-        log.error({ gids, err });
+        log().error({ gids, err });
       });
     set({
       downloadTasks: R.filter((v: DownloadTask) => !gids.includes(v.gid))(
@@ -299,11 +300,11 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
     }
     const task = downloadTasks[index];
     const now = Date.now();
-    const status = await aria2.invoke('aria2.tellStatus', gid);
+    const status = await aria2.tellStatus(gid);
 
     if (status.status === 'error') {
       if (task.ariaRetryCountRemains > 0) {
-        log.warn(
+        log().warn(
           `Task download failed, retry it. RetryCountRemains: ${task.ariaRetryCountRemains}`,
           task,
         );
@@ -321,7 +322,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
         });
         newTask.gid = gid;
 
-        const status = await aria2.invoke('aria2.tellStatus', task.gid);
+        const status = await aria2.tellStatus(task.gid);
         newTask.status = status.status;
 
         set({
@@ -331,7 +332,7 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
         const newTask = await mergeAriaStatusToDownloadTask(status, task);
         const msg = '任务下载失败';
         const desc = `${newTask.fileName}\n${newTask.error || '未知原因'}`;
-        log.error('Task download failed', newTask);
+        log().error('Task download failed', newTask);
         antNotification.error({
           message: msg,
           description: desc,
@@ -399,7 +400,7 @@ aria2.onDownloadStart.listen(onAria2StatusChanged);
 aria2.onDownloadStop.listen(onAria2StatusChanged);
 
 async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
-  log.info('Run creation task', task);
+  log().info('Run creation task', task);
   const { filter, user } = task;
 
   const { batchCreateDownloadTask, updateCreationTask } =
@@ -425,11 +426,11 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
       return;
     }
 
-    log.info('CreationTask fetching', nextCursor);
+    log().info('CreationTask fetching', nextCursor);
     const { twitterPosts, cursor } = await getListFn(user.id, nextCursor);
     nextCursor = cursor;
     now = R.last(twitterPosts)?.createdAt || now;
-    log.info('Now', now.format('YYYY-MM-DD'), 'next cursor', nextCursor);
+    log().info('Now', now.format('YYYY-MM-DD'), 'next cursor', nextCursor);
     const filteredPosts = twitterPosts.filter(
       R.allPass([
         (post) => (post.medias ? post.medias.length >= 0 : false),
@@ -447,7 +448,7 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
     const filteredCount =
       getMediaCounts(twitterPosts) - getMediaCounts(filteredPosts);
     skipCount += filteredCount;
-    log.info('FilteredPosts', filteredPosts);
+    log().info('FilteredPosts', filteredPosts);
 
     if (filteredPosts.length === 0) {
       updateCreationTask({
@@ -470,15 +471,15 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
         ]),
       );
 
-      log.info('FilteredMedias', filteredMedias);
+      log().info('FilteredMedias', filteredMedias);
       for (const media of filteredMedias) {
         const task = await prepareDownloadTask({ post, media });
-        log.info('Prepared download task', task);
+        log().info('Prepared download task', task);
         const filePath = await path.join(task.dir, task.fileName);
-        log.info('Resolved file path', filePath);
+        log().info('Resolved file path', filePath);
         if (settings.download.sameFileSkip && (await fs.exists(filePath))) {
           skipCount++;
-          log.info('Skip because sameFileSkip', media);
+          log().info('Skip because sameFileSkip', media);
           continue;
         }
         paramsList.push({
@@ -488,7 +489,7 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
       }
     }
 
-    log.info('Params', paramsList);
+    log().info('Params', paramsList);
 
     if (paramsList.length === 0) {
       updateCreationTask({
@@ -534,7 +535,7 @@ async function scheduleCreationTasks() {
   ) as AbortController;
 
   if (abortController.signal.aborted) {
-    log.info('Aborted creation task, remove it', task);
+    log().info('Aborted creation task, remove it', task);
     removeCreationTask(task.id);
     requestIdleCallback(scheduleCreationTasks);
     return;
@@ -545,10 +546,10 @@ async function scheduleCreationTasks() {
 
   try {
     await runCreationTask(task, abortController.signal);
-    log.info('Completed creation task, remove it', task);
+    log().info('Completed creation task, remove it', task);
     removeCreationTask(task.id);
   } catch (err: any) {
-    log.error('runCreationTaskError', err);
+    log().error('runCreationTaskError', err);
     removeCreationTask(task.id);
     const reason = typeof err === 'string' ? err : err?.message || '未知原因';
     notification.sendNotification({
@@ -575,19 +576,7 @@ async function scheduleAutoSyncTasks() {
   }
 
   const now = Date.now();
-
-  const results = await aria2.batchInvoke(
-    ids.map((id) => ({
-      methodName: 'aria2.tellStatus',
-      params: [id],
-    })),
-  );
-
-  const resultMap = R.pipe(
-    R.flatten,
-    R.map<any, [string, any]>((r: any) => [r.gid, r]),
-    R.fromPairs,
-  )(results);
+  const resultMap = await aria2.tellStatus(ids);
   const { downloadTasks, batchUpdateDownloadTasks } =
     useDownloadStore.getState();
   const newTasks = await Promise.all(

@@ -1,13 +1,5 @@
 /* eslint-disable react/prop-types */
-import {
-  Button,
-  Checkbox,
-  DatePicker,
-  Form,
-  Radio,
-  Space,
-  message,
-} from 'antd';
+import { App, Button, Checkbox, DatePicker, Form, Radio, Space } from 'antd';
 import dayjs from 'dayjs';
 import React from 'react';
 import MediaType from '../../enums/MediaType';
@@ -16,6 +8,7 @@ import { useDownloadStore } from '../../stores/download';
 import { useHomepageStore } from '../../stores/homepage';
 
 export const DownloadController: React.FC = () => {
+  const { message } = App.useApp();
   const { filter, setFilter, user } = useHomepageStore((s) => ({
     filter: s.filter,
     setFilter: s.setFilter,

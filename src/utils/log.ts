@@ -4,137 +4,153 @@ import dayjs, { Dayjs } from 'dayjs';
 import { path, fs } from '@tauri-apps/api';
 import { useSettingsStore } from '../stores/settings';
 
-function logConsole(level: string, time: Dayjs, ...messages: any[]) {
-  const fmtTime = time.format('HH:mm:ss.SSS');
-  switch (level) {
-    case 'INFO':
-      console.info(
-        `%c${fmtTime} %c[INFO]%c`,
-        'color: #aaa; font-weight: bold;',
-        'color: white; font-weight: bold; background: #52c41a',
-        'color: initial; background: initial; font-weight: initial;',
-        ...messages,
-      );
-      break;
-    case 'WARN':
-      console.warn(
-        `%c${fmtTime} %c[WARN]`,
-        'color: #aaa; font-weight: bold;',
-        'color: white; font-weight: bold; background: #d4b106',
-        ...messages,
-      );
-      break;
-    case 'ERROR':
-      console.error(
-        `%c${fmtTime} %c[ERROR]`,
-        'color: #aaa; font-weight: bold;',
-        'color: white; font-weight: bold; background: #f5222d',
-        ...messages,
-      );
-      break;
-    case 'DEBUG':
-      console.debug(
-        `%c${fmtTime} %c[DEBUG]`,
-        'color: #aaa; font-weight: bold;',
-        'color: white; font-weight: bold; background: black',
-        ...messages,
-      );
-      break;
+const DEFAULT_CATEGORY = 'APP';
+
+export class Logger implements ILogger {
+  #now = dayjs();
+  #logFileBuffers: string[] = [];
+  #logFileTimeoutId: number | undefined;
+
+  info(...messages: any[]) {
+    this.#log('INFO', DEFAULT_CATEGORY, ...messages);
   }
-}
-
-const logFilePath = (async () => {
-  const fileName = `${dayjs().format('YYYY-MM-DD HHmmss')}.log`;
-  const logDir = await path.appLogDir();
-
-  if (!(await fs.exists(logDir))) {
-    await fs.createDir(logDir);
+  warn(...messages: any[]) {
+    this.#log('WARN', DEFAULT_CATEGORY, ...messages);
+  }
+  error(...messages: any[]) {
+    this.#log('ERROR', DEFAULT_CATEGORY, ...messages);
+  }
+  debug(...messages: any[]) {
+    if (import.meta.env.DEV) {
+      this.#log('DEBUG', DEFAULT_CATEGORY, ...messages);
+    }
+  }
+  category(name: string): ICategoriedLogger {
+    return {
+      info: (...messages: any[]) => {
+        this.#log('INFO', name, ...messages);
+      },
+      warn: (...messages: any[]) => {
+        this.#log('WARN', name, ...messages);
+      },
+      error: (...messages: any[]) => {
+        this.#log('ERROR', name, ...messages);
+      },
+      debug: (...messages: any[]) => {
+        if (import.meta.env.DEV) {
+          this.#log('DEBUG', name, ...messages);
+        }
+      },
+    };
   }
 
-  return await path.join(logDir, fileName);
-})();
+  async #getLogFilePath() {
+    const fileName = `${this.#now.format('YYYY-MM-DD HHmmss')}.log`;
+    const logDir = await path.appLogDir();
 
-const writeLine = (() => {
-  const writeBuffers: string[] = [];
-  let timeoutId: number | undefined;
+    if (!(await fs.exists(logDir))) {
+      await fs.createDir(logDir);
+    }
 
-  return async (msg: string) => {
-    writeBuffers.push(msg);
+    return await path.join(logDir, fileName);
+  }
 
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(async () => {
+  #log(level: string, category: string, ...messages: any[]) {
+    try {
+      const time = dayjs();
+      this.#logConsole(level, time, category, ...messages);
+
+      if (useSettingsStore.getState().app.writeLogs) {
+        this.#logFile(level, time, category, ...messages);
+      }
+    } catch (err) {
+      console.error('Log error', err);
+    }
+  }
+
+  #logFile(level: string, time: Dayjs, category: string, ...messages: any[]) {
+    const fmtTime = time.toISOString();
+    const msg = `${fmtTime} [${level}] <${category}> ${messages
+      .map((m) => {
+        if (m instanceof Error) {
+          return JSON.stringify({
+            type: 'Error',
+            message: m.message,
+            name: m.name,
+          });
+        }
+        return JSON.stringify(m);
+      })
+      .join(' ')}`;
+    this.#logFileBuffers.push(msg);
+    clearTimeout(this.#logFileTimeoutId);
+
+    this.#logFileTimeoutId = setTimeout(async () => {
       await fs.writeTextFile(
-        await logFilePath,
-        writeBuffers.join('\n') + '\n',
+        await this.#getLogFilePath(),
+        this.#logFileBuffers.join('\n') + '\n',
         {
           append: true,
         },
       );
-      writeBuffers.length = 0;
+      this.#logFileBuffers.length = 0;
     }, 500);
-  };
-})();
+  }
 
-async function logFile(level: string, time: Dayjs, ...messages: any[]) {
-  const fmtTime = time.toISOString();
-  const msg = `${fmtTime} [${level}] ${messages
-    .map((m) => {
-      if (m instanceof Error) {
-        return JSON.stringify({
-          type: 'Error',
-          message: m.message,
-          name: m.name,
-        });
-      }
-      return JSON.stringify(m);
-    })
-    .join(' ')}`;
-  await writeLine(msg);
-}
+  #logConsole(
+    level: string,
+    time: Dayjs,
+    category: string,
+    ...messages: any[]
+  ) {
+    let categoryColor = '#000000';
 
-async function _log(level: string, ...messages: any[]) {
-  try {
-    const time = dayjs();
-    logConsole(level, time, ...messages);
-
-    if (useSettingsStore.getState().app.writeLogs) {
-      await logFile(level, time, ...messages);
+    if (category !== DEFAULT_CATEGORY) {
+      const colorList = [
+        '#f5222d',
+        '#fa541c',
+        '#fa8c16',
+        '#faad14',
+        '#d4b106',
+        '#a0d911',
+        '#52c41a',
+        '#13c2c2',
+        '#1677ff',
+        '#2f54eb',
+        '#722ed1',
+        '#eb2f96',
+      ];
+      // Hash category name
+      const hashedCategoryName = category
+        .split('')
+        .reduce((prev, curr) => prev + curr.charCodeAt(0), 0);
+      categoryColor = colorList[hashedCategoryName % colorList.length];
     }
-  } catch (err) {
-    console.error('Log error', err);
+
+    const fmtTime = time.format('HH:mm:ss.SSS');
+
+    const prefix = (level: string, color: string) => [
+      `%c${fmtTime} %c[${level}]%c %c<${category}>%c`,
+      'color: #aaa; font-weight: bold;',
+      `color: white; font-weight: bold; background: ${color}`,
+      'color: initial; background: initial; font-weight: initial;',
+      `color: ${categoryColor}; font-weight: bold;`,
+      'color: initial; background: initial; font-weight: initial;',
+    ];
+
+    switch (level) {
+      case 'INFO':
+        console.info(...prefix('INFO', '#52c41a'), ...messages);
+        break;
+      case 'WARN':
+        console.warn(...prefix('WARN', '#d4b106'), ...messages);
+        break;
+      case 'ERROR':
+        console.error(...prefix('ERROR', '#f5222d'), ...messages);
+        break;
+      case 'DEBUG':
+        console.debug(...prefix('DEBUG', 'black'), ...messages);
+        break;
+    }
   }
 }
-
-const logger: Logger = {
-  info(...messages) {
-    _log('INFO', ...messages);
-  },
-  warn(...messages) {
-    _log('WARN', ...messages);
-  },
-  error(...messages) {
-    _log('ERROR', ...messages);
-  },
-  debug(...messages) {
-    if (import.meta.env.DEV) {
-      _log('DEBUG', ...messages);
-    }
-  },
-};
-
-window.log = logger;
-
-window.addEventListener('error', (ev) => {
-  log.error('WindowError', {
-    error: ev.error,
-    message: ev.message,
-    filename: ev.filename,
-  });
-});
-
-window.addEventListener('unhandledrejection', (ev) => {
-  log.error('unhandledrejection', {
-    promise: ev.promise,
-    reason: ev.reason,
-  });
-});

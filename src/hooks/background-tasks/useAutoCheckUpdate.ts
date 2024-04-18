@@ -1,7 +1,7 @@
 import { useMount } from 'ahooks';
-import { useSettings } from './useSettings';
-import { useCheckUpdate } from './useCheckUpdate';
-import { useAppStateStore } from '../stores/app-state';
+import { useSettings } from '../useSettings';
+import { useCheckUpdate } from '../useCheckUpdate';
+import { useAppStateStore } from '../../stores/app-state';
 import dayjs from 'dayjs';
 
 export function useAutoCheckUpdate() {

@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { Avatar, Button, Input, Space, message } from 'antd';
+import { Avatar, Button, Input, Space, App } from 'antd';
 import React, { useRef } from 'react';
 import { PageHeader } from '../components/PageHeader';
 import { PostListGridView } from '../components/homepage/PostListGridView';
@@ -9,6 +9,7 @@ import { useHomepageStore } from '../stores/homepage';
 import { buildUserUrl } from '../twitter/url';
 
 export const Homepage: React.FC = () => {
+  const { message } = App.useApp();
   const {
     keyword,
     setKeyword,

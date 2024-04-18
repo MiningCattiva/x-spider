@@ -1,7 +1,7 @@
 import { notification } from '@tauri-apps/api';
 import { useUpdateEffect } from 'ahooks';
 import { notification as antNotification } from 'antd';
-import { useDownloadingItemCounts } from './useDownloadingItemCounts';
+import { useDownloadingItemCounts } from '../useDownloadingItemCounts';
 
 export function useTaskNotifications() {
   const inQueueTasksCount = useDownloadingItemCounts();

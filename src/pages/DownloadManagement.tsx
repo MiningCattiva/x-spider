@@ -5,6 +5,7 @@ import { Tabs } from '../components/download-management/Tabs';
 import { TabDownloading } from '../components/download-management/TabDownloading';
 import { TabError } from '../components/download-management/TabError';
 import { TabComplete } from '../components/download-management/TabComplete';
+import { AriaStatus } from '../utils/aria2';
 
 export const DownloadManagement: React.FC = () => {
   return (
@@ -16,17 +17,21 @@ export const DownloadManagement: React.FC = () => {
             {
               name: '下载中',
               children: <TabDownloading />,
-              countStatus: ['active', 'paused', 'waiting'],
+              countStatus: [
+                AriaStatus.Active,
+                AriaStatus.Waiting,
+                AriaStatus.Paused,
+              ],
             },
             {
               name: '错误',
               children: <TabError />,
-              countStatus: ['error'],
+              countStatus: [AriaStatus.Error],
             },
             {
               name: '已完成',
               children: <TabComplete />,
-              countStatus: ['complete'],
+              countStatus: [AriaStatus.Complete],
             },
           ]}
         />

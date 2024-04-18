@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { createTauriFileStorage } from './persist/tauri-file-storage';
-import { appStateLoadedEvent } from '../events/app-state-loaded';
 
 export interface AppStateStore {
   cookieString: string;
@@ -17,6 +16,9 @@ export interface AppStateStore {
   setLatestVersion: (version: string) => void;
   setLastCheckUpdateTime: (time: number) => void;
   setLatestUrl: (url: string) => void;
+
+  systemProxyUrl: string;
+  setSystemProxyUrl: (url: string) => void;
 }
 
 export const useAppStateStore = create(
@@ -45,15 +47,14 @@ export const useAppStateStore = create(
       setLastCheckUpdateTime: (time) => set({ lastCheckUpdateTime: time }),
       setLatestVersion: (version) => set({ latestVersion: version }),
       setLatestUrl: (url) => set({ latestUrl: url }),
+      systemProxyUrl: '',
+      setSystemProxyUrl: (url) => {
+        set({ systemProxyUrl: url });
+      },
     }),
     {
       name: 'app-state',
       storage: createTauriFileStorage(),
-      onRehydrateStorage() {
-        return () => {
-          appStateLoadedEvent.emit();
-        };
-      },
       version: 1,
     },
   ),

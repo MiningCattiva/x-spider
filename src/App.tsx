@@ -1,19 +1,16 @@
 /* eslint-disable react/prop-types */
-import { ConfigProvider } from 'antd';
-import React from 'react';
-import { ANTD_THEME } from './constants/antd-theme';
-import { SideBar } from './components/SideBar';
-import { useRouteStore } from './stores/route';
-import { useStoreLoaded } from './hooks/useStoreLoaded';
-import { settingsLoadedEvent } from './events/settings-loaded';
-import { appStateLoadedEvent } from './events/app-state-loaded';
-import { LoadingOutlined } from '@ant-design/icons';
-import { useTaskNotifications } from './hooks/useTaskNotifications';
-import zhCN from 'antd/locale/zh_CN';
-import { useAutoCheckUpdate } from './hooks/useAutoCheckUpdate';
+import { CloseCircleFilled, LoadingOutlined } from '@ant-design/icons';
 import { useMount } from 'ahooks';
-import { useSettingsStore } from './stores/settings';
+import { ConfigProvider, App as AntApp } from 'antd';
+import zhCN from 'antd/locale/zh_CN';
+import React from 'react';
+import { SideBar } from './components/SideBar';
+import { ANTD_THEME } from './constants/antd-theme';
+import { useBootstrap } from './hooks/useBootstrap';
+import { useRunBackgroundTasks } from './hooks/useRunBackgroundTasks';
 import { useAppStateStore } from './stores/app-state';
+import { useRouteStore } from './stores/route';
+import { useSettingsStore } from './stores/settings';
 
 const AppInternal: React.FC = () => {
   const currentRoute = useRouteStore((state) => state.route);
@@ -27,7 +24,7 @@ const AppInternal: React.FC = () => {
     });
   });
 
-  useAutoCheckUpdate();
+  useRunBackgroundTasks();
 
   return (
     <div className="bg-gray-50 w-full h-full overflow-auto">
@@ -44,12 +41,7 @@ const AppInternal: React.FC = () => {
 };
 
 export const App: React.FC = () => {
-  const settingsLoaded = useStoreLoaded(settingsLoadedEvent);
-  const appStateLoaded = useStoreLoaded(appStateLoadedEvent);
-
-  const loading = ![settingsLoaded, appStateLoaded].every(Boolean);
-
-  useTaskNotifications();
+  const { ready, error } = useBootstrap();
 
   return (
     <ConfigProvider
@@ -57,15 +49,28 @@ export const App: React.FC = () => {
       autoInsertSpaceInButton={false}
       locale={zhCN}
     >
-      <div className="css-var-r0 select-none text-gray-800 relative w-screen h-screen flex flex-col overflow-hidden">
-        {loading && (
-          <div className="w-screen h-screen flex flex-col items-center justify-center">
-            <LoadingOutlined className="text-5xl text-ant-color-primary" />
-            <p className="mt-4 text-xl">应用加载中，请稍候...</p>
-          </div>
-        )}
-        {!loading && <AppInternal />}
-      </div>
+      <AntApp>
+        <div className="css-var-r0 select-none text-gray-800 relative w-screen h-screen flex flex-col overflow-hidden">
+          {!ready && (
+            <div className="w-screen h-screen flex flex-col items-center justify-center">
+              {!error && (
+                <>
+                  <LoadingOutlined className="text-5xl text-ant-color-primary" />
+                  <p className="mt-4 text-xl">应用启动中，请稍候...</p>
+                </>
+              )}
+              {error && (
+                <>
+                  <CloseCircleFilled className="text-5xl text-ant-color-error" />
+                  <p className="mt-4 text-xl">应用启动失败，请尝试重启应用</p>
+                  <p className="text-gray-600 mt-2">{error || '未知错误'}</p>
+                </>
+              )}
+            </div>
+          )}
+          {ready && <AppInternal />}
+        </div>
+      </AntApp>
     </ConfigProvider>
   );
 };

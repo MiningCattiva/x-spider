@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import { LoadingOutlined } from '@ant-design/icons';
-import { message } from 'antd';
+import { App } from 'antd';
 import dayjs from 'dayjs';
 import * as R from 'ramda';
 import React, { useCallback, useMemo } from 'react';
@@ -14,6 +14,7 @@ import { InfiniteScroll } from '../InfiniteScroll';
 import { GridViewItemAction, GridViewItemActions } from './GridViewItemActions';
 
 export const PostListGridView: React.FC = () => {
+  const { message } = App.useApp();
   const { userInfo, postList } = useHomepageStore((state) => ({
     postList: state.postList,
     userInfo: state.userInfo,
@@ -46,10 +47,15 @@ export const PostListGridView: React.FC = () => {
 
   const requestFn = useCallback(async () => {
     let state = useHomepageStore.getState();
-    if (!state.postList.list) {
-      await state.loadPostList();
-    } else {
-      await state.loadMorePostList();
+
+    try {
+      if (!state.postList.list) {
+        await state.loadPostList();
+      } else {
+        await state.loadMorePostList();
+      }
+    } catch (err: any) {
+      message.error(err.message);
     }
 
     state = useHomepageStore.getState();

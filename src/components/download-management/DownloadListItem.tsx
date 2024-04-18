@@ -8,7 +8,7 @@ import {
   PauseOutlined,
 } from '@ant-design/icons';
 import { dialog, fs, path, shell } from '@tauri-apps/api';
-import { Avatar, Progress, message } from 'antd';
+import { App, Avatar, Progress } from 'antd';
 import * as R from 'ramda';
 import React from 'react';
 import { DownloadTask } from '../../interfaces/DownloadTask';
@@ -28,6 +28,7 @@ export const DownloadListItem: React.FC<DownloadListItemProps> = ({
   task: t,
   itemClientHeight,
 }) => {
+  const { message } = App.useApp();
   const {
     removeDownloadTask,
     pauseDownloadTask,

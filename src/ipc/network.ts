@@ -8,7 +8,12 @@ import { delay } from '../utils';
 const MAX_RETRY_COUNT = 16;
 const MAX_RETRY_DELAY = 16000;
 
+let log: ICategoriedLogger;
+
 export async function request(options: RequestOptions) {
+  if (!log) {
+    log = window.log.category('Net');
+  }
   const url = new URL(options.url);
 
   if (options.query) {

@@ -1,4 +1,4 @@
-import { Aria2Status } from '../utils/aria2';
+import { AriaStatus } from '../utils/aria2';
 import { TwitterMedia } from './TwitterMedia';
 import { TwitterPost } from './TwitterPost';
 
@@ -10,7 +10,7 @@ export interface DownloadTask {
   dir: string;
   totalSize: number;
   completeSize: number;
-  status: Aria2Status;
+  status: AriaStatus;
   error?: string;
   updatedAt: number;
   downloadUrl: string;

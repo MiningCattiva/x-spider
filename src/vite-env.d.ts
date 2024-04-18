@@ -2,15 +2,18 @@
 
 declare const PACKAGE_JSON_VERSION: string;
 declare const PACKAGE_JSON_LICENSE: string;
-interface Logger {
+interface ILogger {
   info: (...messages: any[]) => void;
   warn: (...messages: any[]) => void;
   error: (...messages: any[]) => void;
   debug: (...messages: any[]) => void;
+  category: (name: string) => ICategoriedLogger;
 }
+
+declare type ICategoriedLogger = Omit<ILogger, 'category'>;
 
 declare interface Window {
-  log: Logger;
+  log: ILogger;
 }
 
-declare const log: Logger;
+declare const log: ILogger;

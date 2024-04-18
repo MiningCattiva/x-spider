@@ -5,7 +5,6 @@ import { TwitterPost } from '../interfaces/TwitterPost';
 import { DownloadFilter } from '../interfaces/DownloadFilter';
 import MediaType from '../enums/MediaType';
 import { produce } from 'immer';
-import { message } from 'antd';
 
 export interface PostListRequest {
   list?: TwitterPost[];
@@ -141,7 +140,6 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
       });
     } catch (err: any) {
       log.error('Failed to load post list', err);
-      message.error(`加载图片列表失败：${err?.message || '未知原因'}`);
       set({
         postList: {
           cursor: null,
@@ -149,6 +147,7 @@ export const useHomepageStore = create<HomepageStore>((set, get) => ({
           loading: false,
         },
       });
+      throw new Error(`加载图片列表失败：${err?.message || '未知原因'}`);
     }
   },
   loadMorePostList: async () => {

@@ -1,4 +1,5 @@
 import { path } from '@tauri-apps/api';
+import * as R from 'ramda';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import {
@@ -7,8 +8,6 @@ import {
 } from '../constants/settings';
 import { Settings } from '../interfaces/Settings';
 import { createTauriFileStorage } from './persist/tauri-file-storage';
-import * as R from 'ramda';
-import { settingsLoadedEvent } from '../events/settings-loaded';
 
 export interface SettingsStore extends Settings {
   update: (settings: Settings) => void;
@@ -46,8 +45,6 @@ export const useSettingsStore = create(
               }),
             });
           }
-
-          settingsLoadedEvent.emit();
         };
       },
       migrate(state: any, version) {

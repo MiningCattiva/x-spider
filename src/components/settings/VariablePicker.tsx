@@ -1,10 +1,11 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
 import { clipboard } from '@tauri-apps/api';
-import { Button, Tooltip, message } from 'antd';
+import { Button, Tooltip, App } from 'antd';
 import { REPLACER_MAP } from '../../constants/file-name-template';
 
 export const VariablePicker: React.FC = () => {
+  const { message } = App.useApp();
   return (
     <section
       id="file-name-template-input-variables"
