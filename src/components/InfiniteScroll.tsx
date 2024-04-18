@@ -1,4 +1,5 @@
 /* eslint-disable react/prop-types */
+import { useUnmountedRef } from 'ahooks';
 import React, { useCallback, useEffect, useRef } from 'react';
 
 export interface LoadParam {
@@ -23,6 +24,7 @@ export const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
     hasMore: true,
   });
   const loadingRef = useRef(false);
+  const unmountedRef = useUnmountedRef();
 
   const onScroll = useCallback(async () => {
     const el = ref.current;
@@ -34,7 +36,7 @@ export const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
     let shouldContinueRequest =
       el.scrollHeight - el.scrollTop <= el.clientHeight + thresholdReal;
 
-    while (shouldContinueRequest) {
+    while (shouldContinueRequest && !unmountedRef.current) {
       loadingRef.current = true;
 
       try {
