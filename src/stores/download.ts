@@ -388,17 +388,6 @@ export const useDownloadStore = create<DownloadStore>((set, get) => ({
   },
 }));
 
-// Watch for aria2c notifications
-async function onAria2StatusChanged(gid: string) {
-  await useDownloadStore.getState().syncDownloadTaskStatus(gid);
-}
-
-aria2.onDownloadComplete.listen(onAria2StatusChanged);
-aria2.onDownloadError.listen(onAria2StatusChanged);
-aria2.onDownloadPause.listen(onAria2StatusChanged);
-aria2.onDownloadStart.listen(onAria2StatusChanged);
-aria2.onDownloadStop.listen(onAria2StatusChanged);
-
 async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
   log().info('Run creation task', task);
   const { filter, user } = task;
