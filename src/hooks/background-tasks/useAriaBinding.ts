@@ -3,7 +3,10 @@ import { useResolvedProxyUrl } from '../useResolvedProxyUrl';
 import { aria2 } from '../../utils/aria2';
 import { useDownloadStore } from '../../stores/download';
 
-export function useSyncSettingsToAria() {
+/**
+ * Aria 和 Store 双向绑定
+ */
+export function useAriaBinding() {
   /**
    * 代理地址同步
    */
