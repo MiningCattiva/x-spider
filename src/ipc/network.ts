@@ -12,7 +12,7 @@ let log: ICategoriedLogger;
 
 export async function request(options: RequestOptions) {
   if (!log) {
-    log = window.log.category('Net');
+    log = window.log.category('NET');
   }
   const url = new URL(options.url);
 
