@@ -417,6 +417,7 @@ async function runCreationTask(task: CreationTask, abortSignal: AbortSignal) {
 
     log().info('CreationTask fetching', nextCursor);
     const { twitterPosts, cursor } = await getListFn(user.id, nextCursor);
+    if (abortSignal.aborted) break;
     nextCursor = cursor;
     now = R.last(twitterPosts)?.createdAt || now;
     log().info('Now', now.format('YYYY-MM-DD'), 'next cursor', nextCursor);
