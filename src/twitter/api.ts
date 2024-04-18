@@ -183,7 +183,7 @@ const mapTwitterPosts = (posts: any[]) => {
       retweeted: item?.legacy?.retweeted,
       retweetCount: item?.legacy?.retweet_count,
       medias: item?.legacy?.entities?.media
-        ? mapTwitterMedias(item.legacy.entities.media)
+        ? mapTwitterMedias(item.legacy?.entities?.media)
         : undefined,
       tags: R.pipe<any, any[], string[]>(
         R.path<any>(['legacy', 'entities', 'hashtags']),
@@ -303,6 +303,7 @@ export async function getUserMedias(
     return R.pipe(
       pathToInstructions,
       pathToTwitterPostItems,
+      R.filter(R.isNotNil),
       mapTwitterPosts,
     )(data);
   };
