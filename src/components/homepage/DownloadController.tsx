@@ -6,7 +6,7 @@ import MediaType from '../../enums/MediaType';
 import { DownloadFilter } from '../../interfaces/DownloadFilter';
 import { useDownloadStore } from '../../stores/download';
 import { useHomepageStore } from '../../stores/homepage';
-
+import { useAppStateStore } from '../../stores/app-state';
 export const DownloadController: React.FC = () => {
   const { message } = App.useApp();
   const { filter, setFilter, user } = useHomepageStore((s) => ({
@@ -17,6 +17,11 @@ export const DownloadController: React.FC = () => {
   const { createCreationTask } = useDownloadStore((s) => ({
     createCreationTask: s.createCreationTask,
   }));
+
+  const { searchHistory} =
+  useAppStateStore((s) => ({
+    searchHistory: s.searchHistory,
+  }))
 
   const onStartDownload = async () => {
     if (!user) {
@@ -31,6 +36,27 @@ export const DownloadController: React.FC = () => {
 
     try {
       createCreationTask(user, filter);
+      message.success('已成功创建下载任务，请到下载管理页查看');
+    } catch (err: any) {
+      log.error(err);
+      message.error('创建下载任务失败');
+    }
+  };
+  const onStartDownload2 = async () => {
+    if (!user) {
+      message.error('请先加载用户');
+      return;
+    }
+
+    if (!filter.mediaTypes || filter.mediaTypes.length === 0) {
+      message.error('请至少选择一个媒体类型');
+      return;
+    }
+
+    try {
+      searchHistory.forEach(async (it: any) => {
+        await createCreationTask(it, filter);
+      })
       message.success('已成功创建下载任务，请到下载管理页查看');
     } catch (err: any) {
       log.error(err);
@@ -121,6 +147,11 @@ export const DownloadController: React.FC = () => {
         <Button type="primary" onClick={onStartDownload}>
           <Space>
             <span>开始下载</span>
+          </Space>
+        </Button>
+        <Button type="primary" onClick={onStartDownload2}>
+          <Space>
+            <span>一键下载</span>
           </Space>
         </Button>
       </section>
