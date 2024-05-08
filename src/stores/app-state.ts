@@ -9,7 +9,7 @@ export interface AppStateStore {
   searchHistory: string[];
   addSearchHistory: (keyword: string) => void;
   clearSearchHistory: () => void;
-
+  clearSingleSearchHistory:(keyword: string)=>void;
   latestVersion: string;
   latestUrl: string;
   lastCheckUpdateTime: number;
@@ -41,6 +41,15 @@ export const useAppStateStore = create(
         set({ searchHistory: history });
       },
       clearSearchHistory: () => set({ searchHistory: [] }),
+      clearSingleSearchHistory: (keyword) => {
+        const history = get().searchHistory;
+        const index =history.indexOf(keyword)
+        if(index>=0) {
+          history.splice(index, 1);
+          set({ searchHistory: history })
+        }
+       
+      },
       latestVersion: PACKAGE_JSON_VERSION,
       lastCheckUpdateTime: 0,
       latestUrl: '',
