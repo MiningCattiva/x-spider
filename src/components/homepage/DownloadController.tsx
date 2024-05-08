@@ -7,6 +7,7 @@ import { DownloadFilter } from '../../interfaces/DownloadFilter';
 import { useDownloadStore } from '../../stores/download';
 import { useHomepageStore } from '../../stores/homepage';
 import { useAppStateStore } from '../../stores/app-state';
+import { getUser } from '../../twitter/api';
 export const DownloadController: React.FC = () => {
   const { message } = App.useApp();
   const { filter, setFilter, user } = useHomepageStore((s) => ({
@@ -17,11 +18,10 @@ export const DownloadController: React.FC = () => {
   const { createCreationTask } = useDownloadStore((s) => ({
     createCreationTask: s.createCreationTask,
   }));
-
-  const { searchHistory} =
-  useAppStateStore((s) => ({
-    searchHistory: s.searchHistory,
-  }))
+  const { searchHistory } =
+    useAppStateStore((s) => ({
+      searchHistory: s.searchHistory,
+    }))
 
   const onStartDownload = async () => {
     if (!user) {
@@ -52,10 +52,10 @@ export const DownloadController: React.FC = () => {
       message.error('请至少选择一个媒体类型');
       return;
     }
-
     try {
       searchHistory.forEach(async (it: any) => {
-        await createCreationTask(it, filter);
+        const value = await getUser(it)
+        await createCreationTask(value, filter);
       })
       message.success('已成功创建下载任务，请到下载管理页查看');
     } catch (err: any) {
