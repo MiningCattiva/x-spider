@@ -472,17 +472,15 @@ export async function getUserTweets(
   };
 
   const twitterPosts = extractTwitterPosts(pathToInstructions, resp.body);
-
+  const nextCursor = extractNextCursor(pathToInstructions, resp.body);
   if (!twitterPosts || twitterPosts.length === 0) {
     return {
-      cursor: null,
+      cursor: nextCursor,
       twitterPosts: [],
     };
   }
 
   log.info('twitterPosts', twitterPosts);
-
-  const nextCursor = extractNextCursor(pathToInstructions, resp.body);
 
   return {
     twitterPosts,
