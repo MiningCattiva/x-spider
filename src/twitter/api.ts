@@ -16,11 +16,13 @@ import { useAppStateStore } from '../stores/app-state';
 import { parseCookie } from '../utils/cookie';
 import MediaType from '../enums/MediaType';
 
+const HOST = 'x.com';
+
 function getCommonHeaders(withCredentials = true): Record<string, string> {
   const cookies = useAppStateStore.getState().cookieString;
   return {
     'User-Agent': navigator.userAgent,
-    Referer: 'https://twitter.com',
+    Referer: `https://${HOST}`,
     ...(withCredentials
       ? {
           Authorization:
@@ -44,7 +46,7 @@ export async function getAccountInfo(
 ): Promise<TwitterAccountInfo> {
   const res = await request({
     method: 'GET',
-    url: 'https://twitter.com',
+    url: `https://${HOST}`,
     responseType: 'text',
     headers: R.mergeRight(getCommonHeaders(false), {
       Cookie: cookieStringOverride,
@@ -68,7 +70,7 @@ export async function getUser(screenName: string): Promise<TwitterUser> {
   const resp = await request({
     method: 'GET',
     responseType: 'json',
-    url: 'https://twitter.com/i/api/graphql/NimuplG1OB7Fd2btCLdBOw/UserByScreenName',
+    url: `https://${HOST}/i/api/graphql/NimuplG1OB7Fd2btCLdBOw/UserByScreenName`,
     query: {
       features: JSON.stringify({
         hidden_profile_likes_enabled: true,
@@ -221,7 +223,7 @@ export async function getUserMedias(
 }> {
   const resp = await request({
     method: 'GET',
-    url: 'https://twitter.com/i/api/graphql/cEjpJXA15Ok78yO4TUQPeQ/UserMedia',
+    url: `https://${HOST}/i/api/graphql/cEjpJXA15Ok78yO4TUQPeQ/UserMedia`,
     responseType: 'json',
     query: {
       features: JSON.stringify({
@@ -351,7 +353,7 @@ export async function getUserTweets(
 }> {
   const resp = await request({
     method: 'GET',
-    url: 'https://twitter.com/i/api/graphql/9zyyd1hebl7oNWIPdA8HRw/UserTweets',
+    url: `https://${HOST}/i/api/graphql/9zyyd1hebl7oNWIPdA8HRw/UserTweets`,
     responseType: 'json',
     query: {
       features: JSON.stringify({
