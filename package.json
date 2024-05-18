@@ -1,7 +1,7 @@
 {
   "name": "x-spider",
   "private": true,
-  "version": "2.2.2-0",
+  "version": "2.2.2-1",
   "type": "module",
   "packageManager": "pnpm@9.0.0",
   "license": "GPL-3.0-only",
