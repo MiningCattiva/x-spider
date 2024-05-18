@@ -304,9 +304,11 @@ export async function getUserMedias(
     };
     return R.pipe(
       pathToInstructions,
-      pathToTwitterPostItems,
-      R.filter(R.isNotNil),
-      mapTwitterPosts,
+      R.ifElse(
+        R.isNil,
+        R.always([]),
+        R.pipe(pathToTwitterPostItems, R.filter(R.isNotNil), mapTwitterPosts),
+      ),
     )(data);
   };
 

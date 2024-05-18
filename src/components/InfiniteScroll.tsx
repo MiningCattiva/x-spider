@@ -44,8 +44,8 @@ export const InfiniteScroll: React.FC<InfiniteScrollProps> = ({
       } finally {
         loadingRef.current = false;
       }
-
       shouldContinueRequest =
+        paramRef.current.hasMore &&
         el.scrollHeight - el.scrollTop <= el.clientHeight + thresholdReal;
     }
   }, [requestFn]);
