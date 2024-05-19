@@ -18,15 +18,15 @@ export const Homepage: React.FC = () => {
     loadUser,
     clearPostList: clearMediaList,
   } = useHomepageStore();
-  const { searchHistory, addSearchHistory, clearSearchHistory, cookieString } =
+  const { searchHistory, addSearchHistory, clearSearchHistory,clearSingleSearchHistory, cookieString } =
     useAppStateStore((s) => ({
       searchHistory: s.searchHistory,
       addSearchHistory: s.addSearchHistory,
       clearSearchHistory: s.clearSearchHistory,
+      clearSingleSearchHistory: s.clearSingleSearchHistory,
       cookieString: s.cookieString,
     }));
   const searchAbortControllerRef = useRef<AbortController>();
-
   const startSearch = async (sn: string) => {
     if (!sn) return;
     sn = sn.trim();
@@ -40,13 +40,29 @@ export const Homepage: React.FC = () => {
     clearMediaList();
 
     try {
-      await loadUser(sn);
-      addSearchHistory(sn);
+      if(sn.includes(';')) {
+        const snList = sn.split(';');
+        snList.forEach((s) => {
+           loadUser(s);
+          addSearchHistory(s);
+        })
+       
+        
+      }else {
+        await loadUser(sn);
+        addSearchHistory(sn);
+      }
+     
     } catch (err: any) {
       log.error(err);
       message.error('加载失败，请检查用户 ID 是否正确');
     }
   };
+const deleteSingleHistory = (sn:any)=>{
+  clearSingleSearchHistory(sn)
+  message.info('删除成功！');
+}
+
 
   return (
     <div className="flex flex-col h-screen">
@@ -117,6 +133,9 @@ export const Homepage: React.FC = () => {
                         <span className="sr-only">搜索</span>
                         {sn}
                       </Button>
+                      <span style={{color: 'red', fontSize: '12px'}} onClick={()=>{
+                        deleteSingleHistory(sn);
+                      }}>⊗</span>
                     </li>
                   ))}
                 </ul>
