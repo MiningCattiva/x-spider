@@ -1,3 +1,7 @@
+【近期状况说明】
+
+由于个人规划，所有开源软件暂时停更，请不要再进行打赏，顺利的话预计到明年年后会重启软件开发等计划。
+
 # X-Spider
 
 [![版本](https://img.shields.io/github/v/release/MiningCattiva/x-spider?label=%E7%89%88%E6%9C%AC)](https://github.com/MiningCattiva/x-spider/releases)
